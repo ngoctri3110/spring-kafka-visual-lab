@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Khóa học trực quan Apache Kafka với Java và Spring Boot: từ nền tảng đến reliability, consistency, testing, observability và capstone." />
+  <meta name="theme-color" content="#15233b" />
+  <meta property="og:title" content="Kafka Spring Boot Visual Lab" />
+  <meta property="og:description" content="12 bài học trực quan, có mô phỏng tương tác và thực hành Java/Spring Boot." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://ngoctri3110.github.io/spring-kafka-visual-lab/" />
+  <link rel="canonical" href="https://ngoctri3110.github.io/spring-kafka-visual-lab/" />
+  <title>Kafka Spring Boot Visual Lab</title>
+  <style>
+    :root{--ink:#15233b;--muted:#5d6b82;--paper:#f7f4ec;--card:#fff;--line:#d8d3c6;--orange:#ff7a2f;--cyan:#1facc0;--green:#26926e;--violet:#7057c7;--shadow:0 12px 32px rgba(21,35,59,.10)}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 15% 0,#fff4dc 0,transparent 32rem),var(--paper);font-family:Inter,"Segoe UI",Arial,sans-serif;line-height:1.6}a{color:inherit}.wrap{width:min(1160px,calc(100% - 32px));margin:auto}
+    header{padding:72px 0 44px;overflow:hidden}.hero{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,.75fr);gap:34px;align-items:center}.eyebrow{display:inline-flex;gap:8px;align-items:center;padding:6px 12px;border:2px solid var(--ink);border-radius:999px;background:#fff;font-size:.78rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.eyebrow span{width:9px;height:9px;border-radius:50%;background:var(--orange)}h1{max-width:780px;margin:18px 0 12px;font-size:clamp(2.5rem,6.4vw,5.8rem);line-height:.93;letter-spacing:-.055em}h1 em{display:block;color:var(--orange);font-style:normal}.lead{max-width:700px;margin:0;color:var(--muted);font-size:clamp(1rem,2vw,1.25rem)}.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}.button{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:10px 18px;border:2px solid var(--ink);border-radius:12px;background:var(--ink);color:#fff;font-weight:900;text-decoration:none;box-shadow:4px 4px 0 var(--orange);transition:.18s transform,.18s box-shadow}.button:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 var(--orange)}.button.secondary{background:#fff;color:var(--ink);box-shadow:none}
+    .progress-card{position:relative;padding:26px;border:2px solid var(--ink);border-radius:22px;background:#fff;box-shadow:9px 9px 0 #bde8eb}.progress-card:before{content:"";position:absolute;right:20px;top:20px;width:46px;height:46px;border:8px solid #ffe1bf;border-radius:50%}.progress-card h2{margin:0 0 6px;font-size:1.2rem}.big-progress{display:flex;align-items:baseline;gap:5px;margin:8px 0}.big-progress strong{font-size:3.8rem;line-height:1}.big-progress span{font-weight:900;color:var(--muted)}.bar{height:13px;overflow:hidden;border:2px solid var(--ink);border-radius:999px;background:#eee}.bar>span{display:block;width:0;height:100%;background:linear-gradient(90deg,var(--orange),#ffb13b);transition:width .35s ease}.progress-note{margin:12px 0 0;color:var(--muted);font-size:.84rem}
+    .map{padding:22px 0 54px}.map h2,.sources h2{margin:0 0 8px;font-size:clamp(1.8rem,4vw,3rem);letter-spacing:-.04em}.section-lead{margin:0 0 28px;color:var(--muted)}.phase{margin:34px 0}.phase-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}.phase-no{display:grid;place-items:center;width:38px;height:38px;border:2px solid var(--ink);border-radius:12px;background:#fff;font-weight:1000}.phase h3{margin:0;font-size:1.32rem}.phase p{margin:0;color:var(--muted);font-size:.9rem}.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.lesson{position:relative;display:flex;min-height:255px;flex-direction:column;padding:20px;border:2px solid var(--line);border-radius:18px;background:var(--card);box-shadow:var(--shadow);transition:.2s transform,.2s border-color}.lesson:hover{transform:translateY(-4px);border-color:var(--ink)}.lesson-top{display:flex;align-items:center;justify-content:space-between;gap:10px}.module{font-size:.76rem;font-weight:1000;letter-spacing:.09em;text-transform:uppercase}.status{padding:3px 8px;border-radius:999px;background:#edf0f4;color:var(--muted);font-size:.72rem;font-weight:900}.lesson h4{margin:15px 0 7px;font-size:1.22rem;line-height:1.25}.lesson p{margin:0 0 18px;color:var(--muted);font-size:.92rem}.lesson-link{margin-top:auto;font-weight:1000;text-decoration:none}.lesson-link:after{content:" →"}.mini-bar{height:8px;margin:13px 0 0;overflow:hidden;border-radius:999px;background:#e7e8ea}.mini-bar span{display:block;width:0;height:100%;background:var(--green)}.lesson[data-phase="2"] .mini-bar span{background:var(--orange)}.lesson[data-phase="3"] .mini-bar span{background:var(--violet)}.lesson[data-phase="4"] .mini-bar span{background:var(--cyan)}
+    .promise{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:12px 0 68px}.promise article{padding:22px;border:2px dashed var(--ink);border-radius:18px;background:rgba(255,255,255,.6)}.promise strong{display:block;margin-bottom:5px;font-size:1.06rem}.promise p{margin:0;color:var(--muted);font-size:.9rem}.sources{padding:52px 0;background:var(--ink);color:#fff}.sources .section-lead{color:#bdc7d7}.source-links{display:flex;gap:10px;flex-wrap:wrap}.source-links a{padding:9px 13px;border:1px solid #71809a;border-radius:10px;text-decoration:none;font-weight:800}.source-links a:hover{background:#fff;color:var(--ink)}footer{padding:25px 0;background:#0d1729;color:#aeb8c9;font-size:.84rem}.footer-row{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}code{color:#fff3c2}
+    @media(max-width:850px){.hero{grid-template-columns:1fr}.progress-card{max-width:560px}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.promise{grid-template-columns:1fr}.progress-card:before{display:none}}
+    @media(max-width:560px){.wrap{width:min(100% - 22px,1160px)}header{padding-top:38px}.cards{grid-template-columns:1fr}.lesson{min-height:220px}.button{width:100%}.hero-actions{gap:10px}h1{font-size:2.7rem}.big-progress strong{font-size:3rem}}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap hero">
+      <div>
+        <div class="eyebrow"><span></span> Java · Spring Boot · Apache Kafka</div>
+        <h1>Kafka không chỉ để đọc. <em>Hãy làm nó chạy.</em></h1>
+        <p class="lead">Một lộ trình trực quan gồm 12 bài: quan sát luồng dữ liệu, tự dự đoán kết quả, chạy mô phỏng và viết lại bằng Java/Spring Boot.</p>
+        <div class="hero-actions">
+          <a class="button" id="continueButton" href="visual-guides/html/kafka-visual-lab-module-01-02.html">Bắt đầu Module 1–2</a>
+          <a class="button secondary" href="#curriculum">Xem lộ trình</a>
+        </div>
+      </div>
+      <aside class="progress-card" aria-labelledby="progressTitle">
+        <h2 id="progressTitle">Tiến độ trên trình duyệt này</h2>
+        <div class="big-progress"><strong id="overallPercent">0</strong><span>%</span></div>
+        <div class="bar" aria-hidden="true"><span id="overallBar"></span></div>
+        <p id="overallText"><b>0/84</b> mục đã hoàn thành</p>
+        <p class="progress-note">Tiến độ dùng <code>localStorage</code>: không cần tài khoản, nhưng không tự đồng bộ sang trình duyệt hoặc thiết bị khác.</p>
+      </aside>
+    </div>
+  </header>
+
+  <main>
+    <section class="wrap map" id="curriculum">
+      <h2>Lộ trình từ message đến production</h2>
+      <p class="section-lead">Mỗi bài có 7 điểm kiểm tra. Học theo thứ tự để các quyết định kỹ thuật nối thành một hệ thống hoàn chỉnh.</p>
+
+      <div class="phase">
+        <div class="phase-head"><span class="phase-no">1</span><div><h3>Foundation</h3><p>Hiểu log, partition, consumer group và cách Kafka phân phối công việc.</p></div></div>
+        <div class="cards">
+          <article class="lesson" data-key="kafka-visual-lab-m01-m02" data-phase="1"><div class="lesson-top"><span class="module">Module 1–2</span><span class="status">0/7</span></div><h4>Tư duy Kafka &amp; Spring Boot đầu tiên</h4><p>Broker, topic, partition, offset và luồng producer → consumer bằng một mô hình dễ nhớ.</p><a class="lesson-link" href="visual-guides/html/kafka-visual-lab-module-01-02.html">Mở bài học</a><div class="mini-bar"><span></span></div></article>
+          <article class="lesson" data-key="kafka-visual-lab-m03" data-phase="1"><div class="lesson-top"><span class="module">Module 3</span><span class="status">0/7</span></div><h4>Consumer Group &amp; Rebalance</h4><p>Mô phỏng assignment, scale consumer và xem điều gì xảy ra khi một instance rời nhóm.</p><a class="lesson-link" href="visual-guides/html/kafka-visual-lab-module-03-consumer-group.html">Mở bài học</a><div class="mini-bar"><span></span></div></article>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-head"><span class="phase-no">2</span><div><h3>Reliability</h3><p>Kiểm soát delivery, ordering, schema, offset, retry và lỗi vĩnh viễn.</p></div></div>
+        <div class="cards">
+          <article class="lesson" data-key="kafka-visual-lab-m04" data-phase="2"><div class="lesson-top"><span class="module">Module 4</span><span class="status">0/7</span></div><h4>Producer Reliability</h4><p>acks, retries, idempotence và các cấu hình giữ message không bị mất hoặc nhân bản.</p><a class="lesson-link" href="visual-guides/html/kafka-visual-lab-module-04-producer-reliability.html">Mở bài học</a><div class="mini-bar"><span></span></div></article>
+          <article class="lesson" data-key="kafka-visual-lab-m05" data-phase="2"><div class="lesson-top"><span class="module">Module 5</span><span class="status">0/7</span></div><h4>Partition Key &amp; Ordering</h4><p>Chọn key theo business entity để vừa scale vừa bảo toàn thứ tự cần thiết.</p><a class="lesson-link" href="visual-guides/html/kafka-visual-lab-module-05-partition-key-ordering.html">Mở bài học</a><div class="mini-bar"><span></span></div></article>
+          <article class="lesson" data-key="kafka-visual-lab-m06" data-phase="2"><div class="lesson-top"><span class="module">Module 6</span><span class="status">0/7</span></div><h4>Serialization &amp; Schema Evolution</h4><p>JSON, type headers và nguyên tắc thay đổi event mà consumer cũ vẫn đọc được.</p><a class="lesson-link" href="visual-guides/html/kafka-visual-lab-module-06-serialization-schema-evolution.html">Mở bài học</a><div class="mini-bar"><span></span></div></article>
+          <article class="lesson" data-key="kafka-visual-lab-m07" data-phase="2"><div class="lesson-top"><span class="module">Module 7</span><span class="status">0/7</span></div><h4>Consumer Offset &amp; Commit</h4><p>So sánh commit trước/sau xử lý, duplicate, data loss và manual acknowledgment.</p><a class="lesson-link" href="visual-guides/html/kafka-visual-lab-module-07-consumer-offset-commit.html">Mở bài học</a><div class="mini-bar"><span></span></div></article>
+          <article class="lesson" data-key="kafka-visual-lab-m08" data-phase="2"><div class="lesson-top"><span class="module">Module 8</span><span class="status">0/7</span></div><h4>Retry, Backoff &amp; DLT</h4><p>Tách lỗi tạm thời khỏi poison pill và thiết kế đường phục hồi có quan sát.</p><a class="lesson-link" href="visual-guides/html/kafka-visual-lab-module-08-retry-backoff-dlt.html">Mở bài học</a><div class="mini-bar"><span></span></div></article>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-head"><span class="phase-no">3</span><div><h3>Consistency</h3><p>Giải quyết ranh giới transaction và hiệu ứng lặp giữa database với Kafka.</p></div></div>
+        <div class="cards">
+          <article class="lesson" data-key="kafka-visual-lab-m09" data-phase="3"><div class="lesson-top"><span class="module">Module 9</span><span class="status">0/7</span></div><h4>Kafka Transactions &amp; EOS</h4><p>Atomic read-process-write trong Kafka và phạm vi thực sự của exactly-once semantics.</p><a class="lesson-link" href="visual-guides/html/kafka-visual-lab-module-09-kafka-transactions-eos.html">Mở bài học</a><div class="mini-bar"><span></span></div></article>
+          <article class="lesson" data-key="kafka-visual-lab-m10" data-phase="3"><div class="lesson-top"><span class="module">Module 10</span><span class="status">0/7</span></div><h4>Outbox &amp; Idempotent Consumer</h4><p>Ghi business data với event atomically và biến at-least-once thành hiệu ứng đúng một lần.</p><a class="lesson-link" href="visual-guides/html/kafka-visual-lab-module-10-outbox-idempotent-consumer.html">Mở bài học</a><div class="mini-bar"><span></span></div></article>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-head"><span class="phase-no">4</span><div><h3>Production</h3><p>Chứng minh bằng test, đo bằng metrics và ghép toàn bộ kỹ thuật thành capstone.</p></div></div>
+        <div class="cards">
+          <article class="lesson" data-key="kafka-visual-lab-m11" data-phase="4"><div class="lesson-top"><span class="module">Module 11</span><span class="status">0/7</span></div><h4>Testing Spring Kafka</h4><p>Test contract, integration với Kafka thật và các failure scenario bằng Testcontainers.</p><a class="lesson-link" href="visual-guides/html/kafka-visual-lab-module-11-testing-spring-kafka.html">Mở bài học</a><div class="mini-bar"><span></span></div></article>
+          <article class="lesson" data-key="kafka-visual-lab-m12" data-phase="4"><div class="lesson-top"><span class="module">Module 12</span><span class="status">0/7</span></div><h4>Observability &amp; Performance</h4><p>Đọc lag, throughput, latency; tìm bottleneck và tuning bằng số đo thay vì phỏng đoán.</p><a class="lesson-link" href="visual-guides/html/kafka-visual-lab-module-12-observability-performance-tuning.html">Mở bài học</a><div class="mini-bar"><span></span></div></article>
+          <article class="lesson" data-key="kafka-visual-lab-m13" data-phase="4"><div class="lesson-top"><span class="module">Module 13 · Capstone</span><span class="status">0/7</span></div><h4>Order Platform chịu được crash</h4><p>Xây, phá và chứng minh một hệ thống dùng outbox, idempotency, retry, DLT và observability.</p><a class="lesson-link" href="visual-guides/html/kafka-visual-lab-module-13-capstone-order-platform.html">Mở bài học</a><div class="mini-bar"><span></span></div></article>
+        </div>
+      </div>
+
+      <div class="promise">
+        <article><strong>Nhìn thấy trước khi ghi nhớ</strong><p>Sơ đồ và simulator biến offset, rebalance hay failure window thành trạng thái quan sát được.</p></article>
+        <article><strong>Dự đoán trước khi bấm</strong><p>Các câu hỏi buộc bạn xây mental model, rồi mới dùng mô phỏng để kiểm chứng.</p></article>
+        <article><strong>Làm lại bằng Spring Boot</strong><p>Mỗi chủ đề quan trọng đều nối sang cấu hình, Java code, test và tiêu chí hoàn thành.</p></article>
+      </div>
+    </section>
+
+    <section class="sources">
+      <div class="wrap">
+        <h2>Nguồn công khai, có thẩm quyền</h2>
+        <p class="section-lead">Nội dung được đối chiếu với tài liệu chính thức của nhà phát hành; không phụ thuộc vào ghi chú hoặc đường dẫn riêng tư.</p>
+        <div class="source-links">
+          <a href="https://kafka.apache.org/documentation/">Apache Kafka</a>
+          <a href="https://docs.spring.io/spring-kafka/reference/">Spring for Apache Kafka</a>
+          <a href="https://docs.spring.io/spring-boot/reference/messaging/kafka.html">Spring Boot</a>
+          <a href="https://debezium.io/documentation/reference/stable/transformations/outbox-event-router.html">Debezium</a>
+          <a href="https://java.testcontainers.org/modules/kafka/">Testcontainers</a>
+          <a href="https://www.postgresql.org/docs/current/">PostgreSQL</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer><div class="wrap footer-row"><span>Kafka Spring Boot Visual Lab</span><span>Static HTML · GitHub Pages-ready · Progress lưu cục bộ</span></div></footer>
+
+  <script>
+    (() => {
+      const cards = [...document.querySelectorAll('.lesson')];
+      const maxPerLesson = 7;
+      let totalDone = 0;
+      let firstIncomplete = null;
+      const readDone = (key) => {
+        try {
+          const saved = JSON.parse(localStorage.getItem(key) || '{}');
+          if (!Array.isArray(saved.checks)) return 0;
+          return new Set(saved.checks.filter(index => Number.isInteger(index) && index >= 0 && index < maxPerLesson)).size;
+        } catch (_) { return 0; }
+      };
+      cards.forEach(card => {
+        const done = readDone(card.dataset.key);
+        totalDone += done;
+        const percent = Math.round(done / maxPerLesson * 100);
+        card.querySelector('.status').textContent = done === maxPerLesson ? 'Hoàn thành' : `${done}/${maxPerLesson}`;
+        card.querySelector('.mini-bar span').style.width = `${percent}%`;
+        if (!firstIncomplete && done < maxPerLesson) firstIncomplete = card.querySelector('.lesson-link');
+      });
+      const total = cards.length * maxPerLesson;
+      const overall = Math.round(totalDone / total * 100);
+      document.getElementById('overallPercent').textContent = overall;
+      document.getElementById('overallBar').style.width = `${overall}%`;
+      document.getElementById('overallText').innerHTML = `<b>${totalDone}/${total}</b> mục đã hoàn thành`;
+      const continueButton = document.getElementById('continueButton');
+      if (firstIncomplete) {
+        continueButton.href = firstIncomplete.href;
+        continueButton.textContent = totalDone ? 'Tiếp tục bài đang học' : 'Bắt đầu Module 1–2';
+      } else {
+        continueButton.href = 'visual-guides/html/kafka-visual-lab-module-13-capstone-order-platform.html';
+        continueButton.textContent = 'Ôn lại Capstone';
+      }
+    })();
+  </script>
+</body>
+</html>

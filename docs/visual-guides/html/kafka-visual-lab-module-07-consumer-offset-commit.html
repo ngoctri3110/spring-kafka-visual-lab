@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Kafka Spring Boot Visual Lab — Module 7: consumer offset, commit, at-least-once, duplicate và idempotent consumer." />
+  <title>Kafka Visual Lab — Module 7: Offset, Commit & Delivery Semantics</title>
+  <style>
+    :root{color-scheme:light;--bg:#f3f1eb;--paper:#fffdf8;--ink:#182238;--muted:#657087;--line:#d9d4ca;--navy:#102f57;--blue:#2878bd;--blue-soft:#e8f3ff;--cyan:#0a8fa0;--orange:#ea7b19;--orange-soft:#fff0df;--green:#16805a;--green-soft:#e8f7f0;--yellow:#eab93f;--yellow-soft:#fff8dc;--red:#c63e38;--red-soft:#fff0ee;--shadow:0 14px 38px rgba(31,42,58,.09);--radius:18px}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(circle at 9% 2%,rgba(10,143,160,.1),transparent 29rem),radial-gradient(circle at 94% 7%,rgba(234,123,25,.1),transparent 31rem),var(--bg);color:var(--ink);line-height:1.65}button,input,textarea,select{font:inherit}button{cursor:pointer}a{color:var(--blue)}code,pre{font-family:"Cascadia Code","Fira Code",Consolas,monospace}
+    .hero{width:min(1180px,calc(100% - 32px));margin:22px auto 0;padding:clamp(26px,5vw,58px);border:1px solid rgba(16,47,87,.12);border-radius:26px;background:rgba(255,253,248,.94);box-shadow:var(--shadow);position:relative;overflow:hidden}.hero:after{content:"+1";position:absolute;right:35px;top:0;color:rgba(10,143,160,.07);font-family:Consolas,monospace;font-size:11rem;font-weight:900;line-height:1}.eyebrow{color:var(--orange);font-size:.82rem;font-weight:850;letter-spacing:.12em;text-transform:uppercase}h1,h2,h3{line-height:1.2;margin:0;color:var(--navy)}h1{margin-top:10px;max-width:980px;font-size:clamp(2rem,5vw,4rem);letter-spacing:-.04em}h2{font-size:clamp(1.45rem,3vw,2.15rem)}h3{font-size:1.08rem}.hero p{max-width:880px;margin:18px 0 0;color:var(--muted);font-size:1.05rem}.tags,.module-nav,.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.tags{margin-top:22px}.tag{padding:7px 12px;border:1px solid var(--line);background:#fff;border-radius:999px;font-size:.82rem;font-weight:750}.module-nav{margin-top:24px}.module-nav a{text-decoration:none;padding:9px 13px;border-radius:10px;background:var(--navy);color:#fff;font-weight:800}.module-nav a.secondary{background:#ebe7df;color:var(--navy)}
+    .layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:26px;width:min(1180px,calc(100% - 32px));margin:28px auto 70px}.toc{position:sticky;top:16px;align-self:start;padding:18px;border:1px solid var(--line);background:rgba(255,253,248,.95);backdrop-filter:blur(12px);border-radius:var(--radius);box-shadow:0 8px 25px rgba(31,42,58,.06)}.toc strong{color:var(--navy)}.toc a{display:block;padding:8px 9px;margin-top:4px;color:var(--muted);border-radius:9px;text-decoration:none;font-size:.88rem}.toc a:hover,.toc a:focus{color:var(--navy);background:var(--orange-soft)}.progress-shell{margin-top:16px}.progress-label{display:flex;justify-content:space-between;color:var(--muted);font-size:.78rem}.progress-track{height:8px;margin-top:6px;border-radius:99px;background:#e8e3da;overflow:hidden}.progress-bar{width:0;height:100%;background:linear-gradient(90deg,var(--cyan),var(--green));transition:width .25s ease}
+    .content{min-width:0}.lesson{min-width:0;margin-bottom:20px;padding:clamp(20px,4vw,34px);border:1px solid var(--line);border-radius:var(--radius);background:var(--paper);box-shadow:0 9px 28px rgba(31,42,58,.055);scroll-margin-top:18px}.kicker{display:block;margin-bottom:8px;color:var(--orange);font-size:.78rem;font-weight:850;letter-spacing:.1em;text-transform:uppercase}.lead{color:var(--muted);font-size:1.02rem}.callout{margin:18px 0;padding:15px 18px;border-left:5px solid var(--orange);border-radius:0 12px 12px 0;background:var(--orange-soft)}.callout.blue{border-color:var(--blue);background:var(--blue-soft)}.callout.green{border-color:var(--green);background:var(--green-soft)}.callout.warn{border-color:var(--yellow);background:var(--yellow-soft)}.callout.red{border-color:var(--red);background:var(--red-soft)}.callout strong{color:var(--navy)}p code,li code,summary code,figcaption code{overflow-wrap:anywhere;word-break:break-word}
+    figure{margin:22px 0 0}.hero-image{display:block;width:100%;border:1px solid var(--line);border-radius:14px;background:#fff}figcaption{margin-top:8px;color:var(--muted);font-size:.83rem}.grid-2,.grid-3,.grid-4{display:grid;gap:14px;margin-top:18px}.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}.card{min-width:0;padding:17px;border:1px solid var(--line);border-radius:14px;background:#fff}.card p{margin:8px 0 0;color:var(--muted);font-size:.92rem}.icon{display:inline-grid;place-items:center;width:38px;height:38px;margin-bottom:10px;border-radius:12px;background:var(--orange-soft);font-size:1.2rem}
+    .simulator{margin-top:18px;padding:18px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#fff,#faf7f0)}.btn{border:0;padding:10px 14px;border-radius:10px;background:var(--navy);color:#fff;font-weight:800;box-shadow:0 5px 13px rgba(16,47,87,.16)}.btn:hover{transform:translateY(-1px)}.btn.orange{background:var(--orange)}.btn.green{background:var(--green)}.btn.secondary{background:#ebe7df;color:var(--navy);box-shadow:none}.btn[aria-pressed="true"]{background:var(--orange);color:#fff;outline:3px solid rgba(234,123,25,.18)}label.control{display:grid;gap:5px;color:var(--muted);font-size:.85rem;font-weight:750}input[type=range]{width:100%;accent-color:var(--orange)}input[type=number]{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+    .offset-track{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:16px}.record{position:relative;padding:14px;border:2px solid var(--line);border-radius:12px;background:#fff}.record .offset{display:block;color:var(--navy);font-family:Consolas,monospace;font-weight:900}.record .event{font-size:.78rem;color:var(--muted)}.record.processed{border-color:var(--green);background:var(--green-soft)}.record.duplicate{border-color:var(--yellow);background:var(--yellow-soft)}.record.lost{border-color:var(--red);background:var(--red-soft)}.record.pending{opacity:.58}.record:after{content:attr(data-state);display:block;margin-top:8px;font-size:.72rem;font-weight:900;letter-spacing:.06em;color:var(--navy)}
+    .meter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}.meter{padding:14px;border:1px solid var(--line);border-radius:12px;background:#fff}.meter strong{display:block;font-size:1.65rem;color:var(--navy)}.meter span{color:var(--muted);font-size:.78rem}.timeline{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:16px}.tick{padding:10px 6px;border-radius:10px;background:#ebe7df;text-align:center;font-size:.77rem;color:var(--muted)}.tick.on{background:var(--blue-soft);color:var(--navy);font-weight:800}.tick.crash{background:var(--red-soft);color:var(--red);font-weight:900}.result{margin-top:15px;padding:15px;border:1px solid var(--line);border-radius:12px;background:#fff}.result.ok{border-color:var(--green);background:var(--green-soft)}.result.risk{border-color:var(--yellow);background:var(--yellow-soft)}.result.fail{border-color:var(--red);background:var(--red-soft)}.result strong{display:block;color:var(--navy)}.result p{margin:5px 0 0;color:var(--muted)}
+    .formula{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:end;gap:14px;margin-top:16px}.plus{padding-bottom:10px;color:var(--orange);font-size:2rem;font-weight:900;text-align:center}.dashboard{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}.gauge{padding:16px;border:1px solid var(--line);border-radius:14px;background:#fff}.gauge output{display:block;color:var(--navy);font-size:2rem;font-weight:900}.gauge small{color:var(--muted)}.bar{height:9px;margin-top:9px;border-radius:99px;background:#e9e4dc;overflow:hidden}.bar i{display:block;height:100%;width:0;background:var(--cyan)}
+    .table-scroll{width:100%;margin-top:16px;overflow-x:auto;border-radius:10px}.comparison{width:100%;min-width:760px;border-collapse:collapse;font-size:.9rem}.comparison th,.comparison td{border:1px solid var(--line);padding:10px;text-align:left;vertical-align:top}.comparison th{background:#f2eee7;color:var(--navy)}.step-list{counter-reset:steps;display:grid;gap:13px;min-width:0;margin-top:17px}.step{position:relative;min-width:0;padding:15px 16px 15px 58px;border:1px solid var(--line);border-radius:13px;background:#fff}.step:before{counter-increment:steps;content:counter(steps);position:absolute;left:15px;top:15px;width:29px;height:29px;display:grid;place-items:center;border-radius:9px;background:var(--orange);color:#fff;font-weight:900}.step p{margin:7px 0 0;color:var(--muted)}pre{max-width:100%;margin:13px 0 0;padding:17px;overflow:auto;border-radius:13px;background:#111827;color:#e5e7eb;font-size:.83rem;line-height:1.55}.todo{color:#86efac}.code-note{color:#fbbf24}.path{display:inline;padding:4px 8px;border-radius:7px;background:#eee9e0;color:var(--navy);font-family:Consolas,monospace;font-size:.82rem;overflow-wrap:anywhere;word-break:break-word}
+    details{margin-top:10px;border:1px solid var(--line);border-radius:12px;background:#fff}summary{padding:13px 15px;color:var(--navy);font-weight:800;cursor:pointer}details>div{padding:0 15px 15px;color:var(--muted)}.checklist{display:grid;gap:10px;margin-top:16px}.check-item{display:flex;gap:10px;align-items:flex-start;padding:11px;border:1px solid var(--line);border-radius:10px;background:#fff}.check-item input{width:auto;margin-top:5px;accent-color:var(--green)}.check-item.done span{color:var(--muted);text-decoration:line-through}.recall{margin-top:15px;padding:16px;border:2px dashed var(--yellow);border-radius:14px;background:var(--yellow-soft)}textarea{width:100%;min-height:100px;margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:9px;resize:vertical}.save{color:var(--green);font-size:.8rem}.sources li{margin-bottom:8px}.sources small{color:var(--muted)}.footer{text-align:center;color:var(--muted);font-size:.82rem;padding:0 18px 30px}
+    @media(max-width:900px){.layout{grid-template-columns:1fr}.toc{position:static}.toc a{display:inline-block}.grid-4,.timeline{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:680px){.grid-2,.grid-3,.grid-4,.offset-track,.meter-grid,.dashboard,.timeline,.formula{grid-template-columns:1fr}.hero{width:min(100% - 20px,1180px)}.layout{width:min(100% - 20px,1180px)}.lesson{padding:20px}.simulator{padding:12px}.plus{padding:0;transform:rotate(90deg)}.hero:after{font-size:7rem;right:-25px}.module-nav a{flex:1;text-align:center}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+  </style>
+</head>
+<body>
+  <a class="course-home" href="../../index.html" aria-label="Trang khóa học" style="position:fixed;right:14px;bottom:14px;z-index:9999;padding:9px 12px;border:2px solid #15233b;border-radius:999px;background:#fff;color:#15233b;font:800 13px/1.2 Inter,'Segoe UI',Arial,sans-serif;text-decoration:none;box-shadow:0 6px 18px rgba(21,35,59,.18)">⌂ Trang khóa học</a>
+  <header class="hero">
+    <div class="eyebrow">Kafka Spring Boot Visual Lab · Module 07</div>
+    <h1>Consumer Offset & Commit: chiếc bookmark quyết định đọc lại từ đâu</h1>
+    <p>Consumer đã nhận record không có nghĩa là record đã được xử lý an toàn. Bài này giúp bạn nhìn rõ <strong>position</strong>, <strong>committed offset</strong>, thời điểm crash, duplicate/loss và cách viết consumer idempotent.</p>
+    <div class="tags"><span class="tag">⏱ 70–90 phút</span><span class="tag">🔖 Commit = recovery bookmark</span><span class="tag">🔁 At-least-once</span><span class="tag">☕ Java + Spring Boot</span></div>
+    <div class="module-nav"><a class="secondary" href="kafka-visual-lab-module-06-serialization-schema-evolution.html">← Module 6</a><a href="#crash-lab">Bắt đầu mô phỏng</a><a href="kafka-visual-lab-module-08-retry-backoff-dlt.html">Module 8 →</a></div>
+  </header>
+
+  <main class="layout">
+    <nav class="toc" aria-label="Mục lục"><strong>Mục lục</strong><a href="#outcome">0. Kết quả cần đạt</a><a href="#mental-model">1. Mental model</a><a href="#crash-lab">2. Crash simulator</a><a href="#commit-math">3. Commit +1</a><a href="#lag-lab">4. Position và lag</a><a href="#semantics">5. Delivery semantics</a><a href="#java-lab">6. Lab Java</a><a href="#spring-lab">7. Lab Spring Boot</a><a href="#failure-lab">8. Kill & restart</a><a href="#quiz">9. Kiểm tra</a><a href="#sources">Nguồn chuẩn</a><div class="progress-shell"><div class="progress-label"><span>Tiến độ lab</span><span id="progressText">0%</span></div><div class="progress-track"><div class="progress-bar" id="progressBar"></div></div></div></nav>
+    <div class="content">
+      <section class="lesson" id="outcome">
+        <span class="kicker">Điều kiện hoàn thành</span><h2>Dự đoán được chuyện gì xảy ra sau một cú crash</h2>
+        <div class="grid-4"><article class="card"><span class="icon">📍</span><h3>Position</h3><p>Chỉ đúng offset kế tiếp mà consumer sẽ trả ra từ <code>poll()</code>.</p></article><article class="card"><span class="icon">🔖</span><h3>Committed</h3><p>Recovery point của consumer group khi restart/rebalance.</p></article><article class="card"><span class="icon">💥</span><h3>Crash window</h3><p>Nhìn thứ tự process/commit để đoán duplicate hay loss.</p></article><article class="card"><span class="icon">🛡️</span><h3>Idempotency</h3><p>Nhận lại cùng event nhưng không tạo side effect lần hai.</p></article></div>
+        <div class="callout warn"><strong>Câu hỏi xuyên suốt:</strong> nếu app chết ngay bây giờ, group sẽ đọc lại từ offset nào—và database đã thay đổi chưa?</div>
+      </section>
+
+      <section class="lesson" id="mental-model">
+        <span class="kicker">Mental model</span><h2>Offset có hai chiếc kim: “đã fetch tới đâu” và “restart từ đâu”</h2>
+        <figure><img class="hero-image" src="../assets/kafka-offset-commit-crash.png" alt="So sánh process rồi commit với commit rồi process khi consumer crash ở offset 42" /><figcaption><code>commit(43)</code> nghĩa là “lần sau đọc từ 43”, không phải “đánh dấu record 43 đã xong”. Bookmark Kafka cũng không chứng minh transaction database đã hoàn tất.</figcaption></figure>
+        <div class="grid-3"><article class="card"><h3>Position</h3><p><code>poll()</code> trả batch 10–12 thì position có thể đã là 13, dù listener mới xử lý offset 10.</p></article><article class="card"><h3>Committed offset</h3><p>Được Kafka lưu theo <code>group.id + topic + partition</code>. Group khác có bookmark riêng.</p></article><article class="card"><h3>Log end offset</h3><p>Vị trí cuối log. So với committed offset để ước lượng consumer group lag.</p></article></div>
+        <div class="callout blue"><strong>Công thức nhớ:</strong> đã xử lý thành công offset <code>N</code> thì recovery point là <code>N + 1</code>.</div>
+      </section>
+
+      <section class="lesson" id="crash-lab">
+        <span class="kicker">Mô phỏng 1</span><h2>Đặt crash vào đúng khe hở</h2><p class="lead">Một lần poll lấy offsets 10, 11, 12. Chọn chiến lược và số record xử lý xong trước khi app chết. Hãy dự đoán trước khi nhấn chạy.</p>
+        <div class="simulator">
+          <div class="toolbar" role="group" aria-label="Chiến lược commit"><button class="btn orange" data-strategy="after" aria-pressed="true">Process → batch commit</button><button class="btn secondary" data-strategy="before" aria-pressed="false">Commit → process</button><button class="btn secondary" data-strategy="idempotent" aria-pressed="false">Process idempotent → commit</button></div>
+          <label class="control" style="margin-top:16px">Crash sau <strong><output id="crashCount">1</output>/3</strong> record đã process <input id="crashSlider" type="range" min="0" max="3" value="1" /></label>
+          <div class="timeline"><div class="tick on" data-tick="poll">1. poll 10–12</div><div class="tick" data-tick="commit-before">2. commit trước</div><div class="tick" data-tick="process">3. process</div><div class="tick crash" data-tick="crash">4. CRASH</div><div class="tick" data-tick="restart">5. restart</div></div>
+          <div class="offset-track" id="recordTrack" aria-live="polite"></div>
+          <div class="meter-grid"><div class="meter"><strong id="positionValue">13</strong><span>position sau poll</span></div><div class="meter"><strong id="committedValue">10</strong><span>committed / restart offset</span></div><div class="meter"><strong id="sideEffectValue">1</strong><span>side effects sau restart</span></div></div>
+          <div class="toolbar" style="margin-top:14px"><button class="btn green" id="runCrash">Chạy crash + restart</button><button class="btn secondary" id="resetCrash">Đặt lại</button></div>
+          <div class="result risk" id="crashResult"><strong>Dự đoán trước</strong><p>Record nào sẽ được giao lại? Record nào có nguy cơ bị bỏ qua?</p></div>
+        </div>
+        <div class="callout red"><strong>Ranh giới quan trọng:</strong> offset commit và database commit là hai hệ thống khác nhau. Không có atomicity tự động giữa chúng.</div>
+      </section>
+
+      <section class="lesson" id="commit-math">
+        <span class="kicker">Mô phỏng 2</span><h2>Commit offset kế tiếp, không commit record vừa xong</h2><p class="lead">Nhập offset cuối đã xử lý. Tự tính recovery point trước rồi kiểm tra.</p>
+        <div class="simulator"><div class="formula"><label class="control">Offset cuối đã xử lý<input id="processedOffset" type="number" min="0" value="42" /></label><div class="plus">+ 1 →</div><label class="control">Offset cần commit<input id="commitGuess" type="number" min="0" value="42" /></label></div><button class="btn green" id="checkCommit" style="margin-top:15px">Kiểm tra</button><div class="result risk" id="commitResult"><strong>Hãy nhập đáp án</strong><p>Nếu vừa xử lý 42, bạn muốn lần sau bắt đầu ở đâu?</p></div></div>
+        <pre><code>// Kafka Java client: commit offset kế tiếp
+long processed = record.offset();
+OffsetAndMetadata checkpoint = new OffsetAndMetadata(processed + 1);
+
+// Với cả batch, ưu tiên metadata do ConsumerRecords cung cấp:
+consumer.commitSync(records.nextOffsets());</code></pre>
+      </section>
+
+      <section class="lesson" id="lag-lab">
+        <span class="kicker">Mô phỏng 3</span><h2>Lag không kể hết chuyện đang xảy ra trong method</h2><p class="lead">Giữ thứ tự <code>committed ≤ position ≤ log end</code>, rồi quan sát hai khoảng cách khác nhau.</p>
+        <div class="simulator"><div class="grid-3"><label class="control">Committed <output id="committedOut">100</output><input id="committedRange" type="range" min="0" max="120" value="100" /></label><label class="control">Position <output id="positionOut">110</output><input id="positionRange" type="range" min="0" max="120" value="110" /></label><label class="control">Log end <output id="endOut">120</output><input id="endRange" type="range" min="0" max="160" value="120" /></label></div><div class="dashboard"><div class="gauge"><output id="inflightOut">10</output><small>fetched nhưng chưa checkpoint</small><div class="bar"><i id="inflightBar"></i></div></div><div class="gauge"><output id="lagOut">20</output><small>group lag ≈ log end − committed</small><div class="bar"><i id="lagBar"></i></div></div><div class="gauge"><output id="unfetchedOut">10</output><small>chưa fetch = log end − position</small><div class="bar"><i id="unfetchedBar"></i></div></div></div><div class="result ok" id="lagResult"><strong>Bookmark đang chậm position 10 records</strong><p>Crash lúc này có thể khiến một phần batch được giao lại, tùy record nào đã tạo side effect.</p></div></div>
+        <div class="callout warn"><strong><code>auto.offset.reset</code> không phải nút rewind:</strong> nó chỉ được dùng khi group chưa có committed offset hợp lệ hoặc offset hiện tại không còn tồn tại. Muốn đọc lại có chủ đích, dùng group mới hoặc reset offsets bằng công cụ vận hành.</div>
+      </section>
+
+      <section class="lesson" id="semantics">
+        <span class="kicker">Bản đồ quyết định</span><h2>Ba delivery semantics là kết quả của thứ tự và ranh giới</h2>
+        <div class="table-scroll" tabindex="0"><table class="comparison"><thead><tr><th>Kiểu</th><th>Thứ tự điển hình</th><th>Khi crash ở khe hở</th><th>Đánh đổi</th></tr></thead><tbody><tr><td><strong>At-most-once</strong></td><td>Commit trước rồi process</td><td>Có thể bỏ qua record chưa tạo side effect</td><td>Không duplicate, chấp nhận loss</td></tr><tr><td><strong>At-least-once</strong></td><td>Process thành công rồi commit</td><td>Record có thể được giao lại</td><td>Không loss do crash window, phải chịu duplicate delivery</td></tr><tr><td><strong>Effectively-once ở DB</strong></td><td>Dedup key + business update trong cùng DB transaction, sau đó ack</td><td>Kafka vẫn redeliver; DB từ chối side effect trùng</td><td>Cần event id ổn định, unique constraint và retention strategy</td></tr></tbody></table></div>
+        <div class="callout green"><strong>Ngôn ngữ chính xác:</strong> idempotent consumer không ngăn Kafka giao lại record; nó làm cho xử lý lại không đổi kết quả nghiệp vụ lần hai.</div>
+      </section>
+
+      <section class="lesson" id="java-lab">
+        <span class="kicker">Lab A · Java nền tảng</span><h2>Tự viết checkpoint calculator và duplicate guard</h2><p class="lead">Không cần Spring. Mục tiêu là thấy state nào sống qua “restart”. Hãy tự điền các <code>TODO</code> trước khi mở gợi ý.</p>
+        <div class="step-list">
+          <article class="step"><h3>Tạo project Maven Java 21</h3><p>Tạo package <span class="path">com.dream.learning.kafka.consumer</span>. Lab này chưa cần dependency Kafka.</p></article>
+          <article class="step"><h3>Tạo record đầu vào</h3><pre><code>public record PolledRecord(long offset, String eventId) {
+    public PolledRecord {
+        <span class="todo">// TODO 1: offset không âm</span>
+        <span class="todo">// TODO 2: eventId không null/blank</span>
+    }
+}</code></pre></article>
+          <article class="step"><h3>Viết quy tắc offset +1</h3><pre><code>public final class OffsetCheckpoint {
+    private OffsetCheckpoint() {}
+
+    public static long nextOffsetAfter(long processedOffset) {
+        <span class="todo">// TODO: validate và dùng Math.addExact(...)</span>
+    }
+}</code></pre><details><summary>Gợi ý khi bí</summary><div>Ném <code>IllegalArgumentException</code> nếu offset âm; trả về <code>Math.addExact(processedOffset, 1)</code>.</div></details></article>
+          <article class="step"><h3>Tạo store chống trùng trong bộ nhớ</h3><pre><code>public final class ProcessedEventStore {
+    private final Set&lt;String&gt; processedIds = new HashSet&lt;&gt;();
+
+    public boolean tryApply(PolledRecord record) {
+        <span class="todo">// TODO: Set.add(eventId) trả false nếu đã tồn tại</span>
+    }
+
+    public int sideEffectCount() { <span class="todo">// TODO</span> }
+}</code></pre><p><span class="code-note">Mô hình học tập:</span> giữ cùng instance store khi tạo consumer mới để giả lập database sống qua restart. RAM thật sẽ mất khi process chết.</p></article>
+          <article class="step"><h3>Viết kịch bản crash/restart</h3><pre><code>var store = new ProcessedEventStore();
+var record = new PolledRecord(42, "evt-42");
+
+store.tryApply(record); // DB side effect thành công
+// CRASH trước khi commit 43
+
+boolean appliedAgain = store.tryApply(record); // redelivery sau restart
+assert !appliedAgain;
+assert store.sideEffectCount() == 1;
+assert OffsetCheckpoint.nextOffsetAfter(record.offset()) == 43;</code></pre></article>
+          <article class="step"><h3>Viết test thất bại trước</h3><pre><code>@Test void processed42MeansCommit43() { <span class="todo">// TODO</span> }
+@Test void sameEventIdOnlyAppliesOnce() { <span class="todo">// TODO</span> }
+@Test void differentEventIdsBothApply() { <span class="todo">// TODO</span> }
+@Test void blankEventIdIsRejected() { <span class="todo">// TODO</span> }</code></pre></article>
+        </div>
+        <div class="callout blue"><strong>Tự kiểm tra:</strong> đổi offset nhưng giữ nguyên <code>eventId</code>. Dedup theo event identity hay theo offset? Trong đa số bài toán nghiệp vụ, eventId bền vững hữu ích hơn vì record có thể được republish sang topic/partition khác.</div>
+      </section>
+
+      <section class="lesson" id="spring-lab">
+        <span class="kicker">Lab B · Spring Boot</span><h2>Ack chỉ sau khi database transaction thành công</h2><p class="lead">Bắt đầu với <code>RECORD</code> để học dễ, rồi chuyển sang manual acknowledgment để nhìn rõ checkpoint.</p>
+        <div class="step-list">
+          <article class="step"><h3>Tắt auto commit và dùng record ack</h3><pre><code>spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: order-projection-v1
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+    listener:
+      ack-mode: record</code></pre><p>Spring Kafka mặc định framework-level là <code>enable.auto.commit=false</code>; khai báo rõ trong lab giúp bạn nhớ chủ đích. Ack mode mặc định của container là <code>BATCH</code>.</p></article>
+          <article class="step"><h3>Tạo bảng dedup</h3><pre><code>create table processed_event (
+  event_id varchar(100) primary key,
+  processed_at timestamp not null default current_timestamp
+);</code></pre><p>Primary key/unique constraint mới là hàng rào race-condition; <code>existsById()</code> rồi insert riêng lẻ không đủ an toàn khi chạy concurrent.</p></article>
+          <article class="step"><h3>Gộp dedup và business update trong một DB transaction</h3><pre><code>@Transactional
+public boolean applyIdempotently(OrderEvent event) {
+    boolean firstTime = processedEvents.tryInsert(event.eventId());
+    if (!firstTime) return false;
+
+    <span class="todo">// TODO: cập nhật order_projection trong CÙNG transaction</span>
+    return true;
+}</code></pre></article>
+          <article class="step"><h3>Listener đơn giản với RECORD</h3><pre><code>@KafkaListener(topics = "orders.events.v1")
+void consume(ConsumerRecord&lt;String, OrderEvent&gt; record) {
+    boolean applied = projectionService.applyIdempotently(record.value());
+    log.info("eventId={} partition={} offset={} applied={}",
+        record.value().eventId(), record.partition(), record.offset(), applied);
+    // listener return thành công → container xử lý commit theo AckMode.RECORD
+}</code></pre></article>
+          <article class="step"><h3>Chuyển sang manual-immediate để học checkpoint</h3><pre><code>spring:
+  kafka:
+    listener:
+      ack-mode: manual_immediate</code></pre><pre><code>@KafkaListener(topics = "orders.events.v1")
+void consume(ConsumerRecord&lt;String, OrderEvent&gt; record,
+             Acknowledgment acknowledgment) {
+    projectionService.applyIdempotently(record.value());
+    <span class="todo">// TODO: chỉ ack sau khi method transaction ở trên return thành công</span>
+}</code></pre><p><code>MANUAL_IMMEDIATE</code> commit ngay khi <code>acknowledge()</code> được gọi trên consumer/listener thread. Không chuyển <code>Consumer</code> sang thread khác: KafkaConsumer không thread-safe.</p></article>
+          <article class="step"><h3>So sánh RECORD và BATCH</h3><p>Gửi 5 events, cố tình fail event thứ 3. Với <code>RECORD</code>, offsets 1–2 đã được checkpoint. Với <code>BATCH</code>, recovery/retry phụ thuộc error handler và batch state; hãy ghi lại record nào được giao lại.</p></article>
+        </div>
+        <div class="callout warn"><strong>Giới hạn của manual ack:</strong> ack chỉ điều khiển offset. Nó không tạo distributed transaction giữa Kafka và database. Module 9–10 sẽ nối tiếp bằng Kafka transaction, outbox và idempotent consumer.</div>
+      </section>
+
+      <section class="lesson" id="failure-lab">
+        <span class="kicker">Lab C · Phá có kiểm soát</span><h2>Kill sau DB commit, trước Kafka ack</h2>
+        <div class="step-list">
+          <article class="step"><h3>Chỉ dùng topic/group lab</h3><p>Topic <code>orders.offset.lab</code>, group <code>offset-lab-v1</code>. Không kill consumer production.</p></article>
+          <article class="step"><h3>Tạo crash hook</h3><pre><code>projectionService.applyIdempotently(event);
+if (crashSwitch.shouldCrash(event.eventId())) {
+    <span class="todo">// TODO lab: dừng process tại đây, trước acknowledge()</span>
+}
+acknowledgment.acknowledge();</code></pre><p>Dùng debugger breakpoint hoặc endpoint lab bật cờ; tránh gọi <code>System.exit</code> trong test suite dùng chung.</p></article>
+          <article class="step"><h3>Gửi một event có eventId cố định</h3><p>Ví dụ <code>evt-crash-42</code>. Ghi topic, partition, offset và row count trước khi kill.</p></article>
+          <article class="step"><h3>Kill rồi restart cùng group.id</h3><p>Event phải được giao lại vì offset chưa commit. Log lần hai phải có <code>applied=false</code>; row business vẫn chỉ thay đổi một lần.</p></article>
+          <article class="step"><h3>Quan sát group bookmark</h3><pre><code>kafka-consumer-groups --bootstrap-server localhost:9092 \
+  --describe --group offset-lab-v1</code></pre><p>Đọc <code>CURRENT-OFFSET</code>, <code>LOG-END-OFFSET</code>, <code>LAG</code>. Producer send success không chứng minh consumer group đã commit.</p></article>
+          <article class="step"><h3>Bỏ dedup và lặp lại trên dữ liệu lab mới</h3><p>Chỉ để quan sát: side effect tăng hai lần sau redelivery. Khôi phục dedup sau khi ghi bằng chứng.</p></article>
+          <article class="step"><h3>Viết báo cáo 6 dòng</h3><p>Crash point; committed offset trước/sau; eventId; số delivery; số side effect; kết luận at-least-once/idempotency.</p></article>
+        </div>
+        <div class="grid-3"><article class="card"><h3>Kafka evidence</h3><p>group, topic, partition, offset, committed, lag.</p></article><article class="card"><h3>App evidence</h3><p>eventId, attempt, applied=true/false, exception.</p></article><article class="card"><h3>DB evidence</h3><p>processed_event row và business row/version/count.</p></article></div>
+      </section>
+
+      <section class="lesson" id="quiz">
+        <span class="kicker">Active recall</span><h2>Trả lời trước khi mở</h2>
+        <details><summary>1. <code>position=13</code> có nghĩa offsets 10–12 đã xử lý DB xong?</summary><div>Không. Nó chỉ cho biết offset kế tiếp mà consumer sẽ trả ra. Xử lý business và committed offset là state khác.</div></details>
+        <details><summary>2. Xử lý offset 42 xong thì commit số nào?</summary><div>43, vì committed offset là vị trí sẽ đọc tiếp.</div></details>
+        <details><summary>3. Process DB xong rồi crash trước commit gây gì?</summary><div>Restart từ committed offset cũ nên record có thể được giao lại. Đây là cửa sổ duplicate của at-least-once.</div></details>
+        <details><summary>4. Commit trước rồi crash trước process gây gì?</summary><div>Group restart sau record đó nên side effect chưa làm có thể bị bỏ qua: loss theo góc nhìn nghiệp vụ.</div></details>
+        <details><summary>5. Idempotent consumer có ngăn redelivery không?</summary><div>Không. Nó phát hiện event đã áp dụng và tránh tạo side effect lần hai.</div></details>
+        <details><summary>6. <code>auto.offset.reset=earliest</code> có làm group đọc lại từ đầu mỗi lần restart?</summary><div>Không. Khi group có committed offset hợp lệ, consumer tiếp tục từ đó. Reset policy chỉ áp dụng khi không có offset ban đầu hoặc offset không còn tồn tại.</div></details>
+        <details><summary>7. Vì sao dedup insert và business update phải cùng DB transaction?</summary><div>Nếu tách đôi, crash có thể để lại “đã dedup” nhưng chưa update business, hoặc update business mà chưa ghi dedup.</div></details>
+        <details><summary>8. Kafka commit có chứng minh database commit thành công không?</summary><div>Không. Đó là hai state ở hai hệ thống; phải thiết kế thứ tự, idempotency hoặc transaction/outbox phù hợp.</div></details>
+        <div class="recall"><strong>Teach-back 90 giây</strong><p>Giải thích cho người khác bằng ba từ: position, bookmark, side effect. Nêu hai crash window.</p><textarea id="teachBack" placeholder="poll đưa position tới..., committed offset là..., nếu crash sau DB trước ack thì..."></textarea><div class="save" id="saveState">Nội dung được lưu cục bộ.</div></div>
+        <h3 style="margin-top:20px">Checklist bằng chứng</h3><div class="checklist"><label class="check-item"><input type="checkbox" data-progress><span>Chạy đủ ba chiến lược crash simulator và giải thích kết quả.</span></label><label class="check-item"><input type="checkbox" data-progress><span>Luôn tính đúng processed N → commit N+1.</span></label><label class="check-item"><input type="checkbox" data-progress><span>Hoàn thành bốn test Java cho checkpoint/dedup.</span></label><label class="check-item"><input type="checkbox" data-progress><span>Chạy Spring listener với RECORD và manual-immediate.</span></label><label class="check-item"><input type="checkbox" data-progress><span>Kill sau DB commit trước ack và thấy redelivery nhưng một side effect.</span></label><label class="check-item"><input type="checkbox" data-progress><span>Sau 24 giờ trả lời tám câu quiz không xem bài.</span></label></div>
+      </section>
+
+      <section class="lesson" id="sources"><span class="kicker">Nguồn chuẩn</span><h2>Đối chiếu kỹ thuật</h2><ul class="sources"><li><a href="https://kafka.apache.org/43/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html" target="_blank" rel="noreferrer">Apache Kafka 4.3 — KafkaConsumer Javadoc</a><br><small>Position, committed position, manual commit, at-least-once và offset kế tiếp.</small></li><li><a href="https://kafka.apache.org/43/configuration/consumer-configs/" target="_blank" rel="noreferrer">Apache Kafka 4.3 — Consumer Configs</a><br><small><code>enable.auto.commit</code>, <code>auto.commit.interval.ms</code>, <code>auto.offset.reset</code>, poll controls.</small></li><li><a href="https://docs.spring.io/spring-kafka/reference/kafka/receiving-messages/message-listener-container.html" target="_blank" rel="noreferrer">Spring Kafka — Message Listener Containers</a><br><small>AckMode RECORD/BATCH/MANUAL/MANUAL_IMMEDIATE và commit behavior.</small></li><li><a href="https://docs.spring.io/spring-kafka/reference/kafka/receiving-messages/message-listeners.html" target="_blank" rel="noreferrer">Spring Kafka — Message Listeners</a><br><small>AcknowledgingMessageListener và consumer thread-safety.</small></li><li><a href="https://docs.spring.io/spring-boot/reference/messaging/kafka.html" target="_blank" rel="noreferrer">Spring Boot — Apache Kafka Support</a><br><small>Cấu hình consumer/listener qua <code>spring.kafka.*</code>.</small></li></ul><div class="callout blue"><strong>Phiên bản:</strong> ví dụ đối chiếu Kafka 4.3 và Spring Kafka 4.1. Nếu project dùng version khác, mở reference đúng version trước khi copy config.</div></section>
+    </div>
+  </main>
+  <p class="footer">Kafka Spring Boot Visual Lab · Module 7 · Poll ≠ process ≠ commit · processed N → commit N+1. · <a href="kafka-visual-lab-module-08-retry-backoff-dlt.html">Học tiếp Module 8 →</a></p>
+
+  <script>
+    const storageKey="kafka-visual-lab-m07",saved=JSON.parse(localStorage.getItem(storageKey)||"{}");
+    const setPressed=(selector,active)=>document.querySelectorAll(selector).forEach(button=>button.setAttribute("aria-pressed",String(button===active)));
+    let strategy="after";const slider=document.getElementById("crashSlider"),track=document.getElementById("recordTrack"),crashResult=document.getElementById("crashResult");
+    document.querySelectorAll("[data-strategy]").forEach(button=>button.onclick=()=>{strategy=button.dataset.strategy;setPressed("[data-strategy]",button);resetCrashView()});
+    slider.oninput=()=>{document.getElementById("crashCount").textContent=slider.value;resetCrashView(false)};
+    function resetCrashView(resetSlider=true){if(resetSlider){slider.value=1;document.getElementById("crashCount").textContent="1"}track.innerHTML=[10,11,12].map((offset,index)=>`<div class="record pending" data-state="WAIT"><span class="offset">offset ${offset}</span><span class="event">evt-${offset}</span></div>`).join("");document.getElementById("positionValue").textContent="13";document.getElementById("committedValue").textContent="10";document.getElementById("sideEffectValue").textContent="0";crashResult.className="result risk";crashResult.innerHTML="<strong>Dự đoán trước</strong><p>Record nào sẽ được giao lại? Record nào có nguy cơ bị bỏ qua?</p>";document.querySelector('[data-tick="commit-before"]').classList.toggle("on",strategy==="before")}
+    document.getElementById("resetCrash").onclick=()=>resetCrashView();
+    document.getElementById("runCrash").onclick=()=>{const count=Number(slider.value),cards=[...track.children];let committed=10,sideEffects=count,duplicate=0,lost=0,restart=10;if(strategy==="before"){committed=13;restart=13;lost=3-count;cards.forEach((card,index)=>{card.className=`record ${index<count?"processed":"lost"}`;card.dataset.state=index<count?"SIDE EFFECT OK":"SKIPPED AFTER RESTART"});crashResult.className=`result ${lost?"fail":"ok"}`;crashResult.innerHTML=`<strong>${lost} record bị bỏ qua sau restart</strong><p>Bookmark đã là 13 trước khi process. ${count} side effect xong; ${lost} record còn lại không được đọc lại.</p>`}else{restart=10;committed=10;duplicate=count;cards.forEach((card,index)=>{if(index<count){card.className=`record ${strategy==="idempotent"?"processed":"duplicate"}`;card.dataset.state=strategy==="idempotent"?"REDELIVERED · DEDUP":"REDELIVERED · APPLIED AGAIN"}else{card.className="record processed";card.dataset.state="PROCESSED AFTER RESTART"}});if(strategy==="idempotent"){sideEffects=3;crashResult.className="result ok";crashResult.innerHTML=`<strong>${duplicate} redelivery, 0 side effect trùng</strong><p>Restart từ 10; unique eventId chặn ${duplicate} lần áp dụng lại. Sau xử lý đủ batch mới commit 13.</p>`}else{sideEffects=3+duplicate;crashResult.className=duplicate?"result risk":"result ok";crashResult.innerHTML=`<strong>${duplicate} record được giao và áp dụng lại</strong><p>Restart từ 10 vì chưa commit. Tổng ${sideEffects} side effects cho 3 events: at-least-once cần idempotency.</p>`}committed=13}document.getElementById("committedValue").textContent=committed;document.getElementById("sideEffectValue").textContent=sideEffects;document.querySelector('[data-tick="process"]').classList.add("on");document.querySelector('[data-tick="restart"]').classList.add("on");crashResult.querySelector("p").insertAdjacentHTML("beforeend",` Restart offset: <code>${restart}</code>.`)};resetCrashView();
+
+    document.getElementById("checkCommit").onclick=()=>{const processed=Number(document.getElementById("processedOffset").value),guess=Number(document.getElementById("commitGuess").value),expected=processed+1,result=document.getElementById("commitResult");if(!Number.isSafeInteger(processed)||processed<0||!Number.isSafeInteger(guess)||guess<0){result.className="result fail";result.innerHTML="<strong>Offset phải là số nguyên không âm</strong><p>Thử lại với giá trị hợp lệ.</p>"}else if(guess===expected){result.className="result ok";result.innerHTML=`<strong>Đúng: processed ${processed} → commit ${expected}</strong><p>Consumer restart sẽ đọc từ ${expected}.</p>`}else{result.className="result fail";result.innerHTML=`<strong>Chưa đúng: cần commit ${expected}</strong><p>Committed offset là record kế tiếp cần đọc, không phải record vừa xử lý.</p>`}};
+
+    const committedRange=document.getElementById("committedRange"),positionRange=document.getElementById("positionRange"),endRange=document.getElementById("endRange");
+    function renderLag(changed){let committed=Number(committedRange.value),position=Number(positionRange.value),end=Number(endRange.value);if(changed==="committed"&&committed>position)positionRange.value=position=committed;if(changed!=="end"&&position>end)endRange.value=end=position;if(changed==="position"&&position<committed)committedRange.value=committed=position;if(changed==="end"&&end<position){positionRange.value=position=end;if(committed>position)committedRange.value=committed=position}document.getElementById("committedOut").textContent=committed;document.getElementById("positionOut").textContent=position;document.getElementById("endOut").textContent=end;const inflight=position-committed,lag=end-committed,unfetched=end-position;document.getElementById("inflightOut").textContent=inflight;document.getElementById("lagOut").textContent=lag;document.getElementById("unfetchedOut").textContent=unfetched;const scale=Math.max(end,1);document.getElementById("inflightBar").style.width=`${inflight/scale*100}%`;document.getElementById("lagBar").style.width=`${lag/scale*100}%`;document.getElementById("unfetchedBar").style.width=`${unfetched/scale*100}%`;document.getElementById("lagResult").innerHTML=`<strong>Bookmark đang chậm position ${inflight} records</strong><p>Group lag là ${lag}; trong đó ${inflight} đã fetch nhưng chưa checkpoint và ${unfetched} chưa fetch.</p>`}
+    committedRange.oninput=()=>renderLag("committed");positionRange.oninput=()=>renderLag("position");endRange.oninput=()=>renderLag("end");renderLag();
+
+    const teach=document.getElementById("teachBack");teach.value=saved.teachBack||"";let timer;teach.oninput=()=>{document.getElementById("saveState").textContent="Đang lưu cục bộ...";clearTimeout(timer);timer=setTimeout(()=>{saved.teachBack=teach.value;localStorage.setItem(storageKey,JSON.stringify(saved));document.getElementById("saveState").textContent="Đã lưu cục bộ."},300)};
+    const checks=[...document.querySelectorAll("[data-progress]")],restored=new Set(saved.checks||[]);checks.forEach((cb,i)=>{cb.checked=restored.has(i);cb.closest(".check-item").classList.toggle("done",cb.checked);cb.onchange=()=>{cb.closest(".check-item").classList.toggle("done",cb.checked);saved.checks=checks.map((item,index)=>item.checked?index:null).filter(index=>index!==null);localStorage.setItem(storageKey,JSON.stringify(saved));updateProgress()}});function updateProgress(){const pct=Math.round(checks.filter(item=>item.checked).length/checks.length*100);document.getElementById("progressBar").style.width=`${pct}%`;document.getElementById("progressText").textContent=`${pct}%`}updateProgress();
+  </script>
+</body>
+</html>

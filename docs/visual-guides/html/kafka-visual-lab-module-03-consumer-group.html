@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Kafka Spring Boot Visual Lab — Module 3: Consumer Group, partition ownership và rebalance." />
+  <title>Kafka Visual Lab — Module 3: Consumer Group & Rebalance</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg:#f4f2ec; --paper:#fffdf8; --ink:#172033; --muted:#667085; --line:#d8d2c8;
+      --navy:#17365d; --blue:#3978c5; --blue-soft:#e9f2ff; --orange:#e97817;
+      --orange-soft:#fff0df; --green:#17865b; --green-soft:#e8f7f0; --yellow:#f5c451;
+      --yellow-soft:#fff8dc; --red:#c43d36; --red-soft:#fff0ee; --purple:#7656b5;
+      --shadow:0 14px 38px rgba(38,44,57,.09); --radius:18px;
+    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth}
+    body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(circle at 12% 4%,rgba(233,120,23,.1),transparent 27rem),radial-gradient(circle at 91% 8%,rgba(57,120,197,.11),transparent 30rem),var(--bg);color:var(--ink);line-height:1.65}
+    button,input,textarea{font:inherit} button{cursor:pointer} a{color:var(--blue)} code,pre{font-family:"Cascadia Code","Fira Code",Consolas,monospace}
+    .hero{width:min(1180px,calc(100% - 32px));margin:22px auto 0;padding:clamp(26px,5vw,58px);border:1px solid rgba(23,54,93,.12);border-radius:26px;background:rgba(255,253,248,.93);box-shadow:var(--shadow);position:relative;overflow:hidden}
+    .hero:after{content:"";position:absolute;width:220px;height:220px;border:46px solid rgba(57,120,197,.07);border-radius:50%;right:-80px;top:-90px}
+    .eyebrow{color:var(--orange);font-size:.82rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+    h1,h2,h3{line-height:1.2;margin:0;color:var(--navy)} h1{margin-top:10px;max-width:900px;font-size:clamp(2rem,5vw,4rem);letter-spacing:-.04em} h2{font-size:clamp(1.45rem,3vw,2.15rem)} h3{font-size:1.08rem}
+    .hero p{max-width:830px;margin:18px 0 0;color:var(--muted);font-size:1.05rem}.tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}.tag{padding:7px 12px;border:1px solid var(--line);background:#fff;border-radius:999px;font-size:.82rem;font-weight:700}
+    .module-nav{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}.module-nav a{text-decoration:none;padding:9px 13px;border-radius:10px;background:var(--navy);color:#fff;font-weight:750}.module-nav a.secondary{background:#ebe7df;color:var(--navy)}
+    .layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:26px;width:min(1180px,calc(100% - 32px));margin:28px auto 70px}.toc{position:sticky;top:16px;align-self:start;padding:18px;border:1px solid var(--line);background:rgba(255,253,248,.95);backdrop-filter:blur(12px);border-radius:var(--radius);box-shadow:0 8px 25px rgba(38,44,57,.06)}.toc strong{color:var(--navy)}.toc a{display:block;padding:8px 9px;margin-top:4px;color:var(--muted);border-radius:9px;text-decoration:none;font-size:.88rem}.toc a:hover,.toc a:focus{color:var(--navy);background:var(--orange-soft)}
+    .progress-shell{margin-top:16px}.progress-label{display:flex;justify-content:space-between;color:var(--muted);font-size:.78rem}.progress-track{height:8px;margin-top:6px;border-radius:99px;background:#e8e3da;overflow:hidden}.progress-bar{width:0;height:100%;background:linear-gradient(90deg,var(--orange),var(--yellow));transition:width .25s ease}
+    .content{min-width:0}.lesson{margin-bottom:20px;padding:clamp(20px,4vw,34px);border:1px solid var(--line);border-radius:var(--radius);background:var(--paper);box-shadow:0 9px 28px rgba(38,44,57,.055);scroll-margin-top:18px}.kicker{display:block;margin-bottom:8px;color:var(--orange);font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}.lead{color:var(--muted);font-size:1.02rem}
+    .callout{margin:18px 0;padding:15px 18px;border-left:5px solid var(--orange);border-radius:0 12px 12px 0;background:var(--orange-soft)}.callout.blue{border-color:var(--blue);background:var(--blue-soft)}.callout.green{border-color:var(--green);background:var(--green-soft)}.callout.warn{border-color:var(--yellow);background:var(--yellow-soft)}.callout.red{border-color:var(--red);background:var(--red-soft)}.callout strong{color:var(--navy)}
+    figure{margin:22px 0 0}.hero-image{display:block;width:100%;margin:0;border:1px solid var(--line);border-radius:14px;background:#fff}figcaption{margin-top:8px;color:var(--muted);font-size:.83rem}
+    .grid-2,.grid-3,.grid-4{display:grid;gap:14px;margin-top:18px}.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}.card{padding:17px;border:1px solid var(--line);border-radius:14px;background:#fff}.card p{margin:8px 0 0;color:var(--muted);font-size:.92rem}.icon{display:inline-grid;place-items:center;width:38px;height:38px;margin-bottom:10px;border-radius:12px;background:var(--orange-soft);font-size:1.2rem}
+    .rule{display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid var(--line);border-radius:13px;background:#fff}.rule-num{flex:0 0 34px;height:34px;display:grid;place-items:center;border-radius:50%;background:var(--navy);color:#fff;font-weight:800}.rule p{margin:2px 0 0;color:var(--muted)}
+    .simulator{margin-top:18px;padding:18px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#fff,#faf7f0)}.sim-toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.btn{border:0;padding:10px 14px;border-radius:10px;background:var(--navy);color:#fff;font-weight:750;box-shadow:0 5px 13px rgba(23,54,93,.16)}.btn:hover{transform:translateY(-1px)}.btn.orange{background:var(--orange)}.btn.red{background:var(--red)}.btn.secondary{background:#ebe7df;color:var(--navy);box-shadow:none}.btn:disabled{cursor:not-allowed;opacity:.48;transform:none}
+    .sim-summary{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0}.metric{padding:7px 10px;border-radius:999px;background:var(--blue-soft);color:var(--navy);font-size:.82rem;font-weight:750}.metric.idle{background:var(--yellow-soft)}
+    .assignment-board{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(220px,.75fr);gap:16px}.partition-list,.consumer-list{display:grid;gap:9px}.partition-row{display:grid;grid-template-columns:65px minmax(0,1fr);align-items:stretch;min-height:58px;border:1px solid var(--line);border-radius:11px;overflow:hidden;background:#fff}.p-name{display:grid;place-items:center;background:var(--orange);color:#fff;font-weight:850}.owner{display:flex;align-items:center;gap:8px;padding:10px 12px;color:var(--navy);font-weight:750}.owner:before{content:"";width:12px;height:12px;border-radius:50%;background:var(--owner-color,var(--blue))}.partition-row.moved{animation:moved .7s ease}.consumer{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:11px 13px;border:2px solid var(--consumer-color,var(--blue));border-radius:11px;background:#fff;font-weight:800;color:var(--navy)}.consumer small{color:var(--muted);font-weight:600}.consumer.idle{border-style:dashed;background:var(--yellow-soft)}
+    @keyframes moved{0%{background:var(--yellow-soft);transform:translateX(-8px)}100%{background:#fff;transform:none}}
+    .event-log{max-height:155px;margin-top:13px;padding:11px;overflow:auto;border-radius:10px;background:#111827;color:#dbeafe;font-family:Consolas,monospace;font-size:.79rem}.event-log div+div{margin-top:4px}.log-time{color:#94a3b8}.log-move{color:#fbbf24}.log-ok{color:#86efac}
+    .group-demo{margin-top:18px;padding:18px;border:1px solid var(--line);border-radius:16px;background:#fff}.topic-log{display:flex;gap:8px;min-height:62px;padding:10px;overflow-x:auto;border:2px solid var(--orange);border-radius:12px;background:var(--orange-soft)}.record{flex:0 0 82px;padding:8px;border-radius:9px;background:#fff;border:1px solid var(--orange);text-align:center}.record strong{display:block;color:var(--navy);font-size:.75rem}.record span{color:var(--muted);font-size:.72rem}.pointers{display:grid;gap:10px;margin-top:13px}.pointer-row{display:grid;grid-template-columns:150px minmax(0,1fr) 80px;gap:10px;align-items:center}.pointer-track{height:14px;border-radius:99px;background:#ece7de;overflow:hidden}.pointer-fill{height:100%;width:0;background:var(--blue);border-radius:99px;transition:width .25s ease}.pointer-row.analytics .pointer-fill{background:var(--purple)}.pointer-row button{padding:7px;border:0;border-radius:8px;background:#ebe7df;color:var(--navy);font-weight:750}
+    .timeline{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:18px}.phase{position:relative;padding:16px 13px;border:1px solid var(--line);border-radius:13px;background:#fff}.phase:not(:last-child):after{content:"→";position:absolute;right:-10px;top:40%;z-index:2;color:var(--orange);font-weight:900}.phase span{display:block;color:var(--orange);font-size:.75rem;font-weight:850}.phase p{margin:6px 0 0;color:var(--muted);font-size:.86rem}
+    .protocol-toggle{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.protocol-toggle button[aria-pressed="true"]{background:var(--orange)}.protocol-panel{margin-top:10px;padding:15px;border:1px solid var(--line);border-radius:12px;background:#fff}.protocol-panel p{margin:0;color:var(--muted)}
+    .step-list{counter-reset:steps;display:grid;gap:13px;min-width:0;margin-top:17px}.step{position:relative;min-width:0;max-width:100%;padding:15px 16px 15px 58px;border:1px solid var(--line);border-radius:13px;background:#fff}.step:before{counter-increment:steps;content:counter(steps);position:absolute;left:15px;top:15px;width:29px;height:29px;display:grid;place-items:center;border-radius:9px;background:var(--orange);color:#fff;font-weight:850}.step p{margin:7px 0 0;color:var(--muted)}
+    pre{max-width:100%;margin:13px 0 0;padding:17px;overflow:auto;border-radius:13px;background:#111827;color:#e5e7eb;font-size:.84rem;line-height:1.55}.code-note{color:#fbbf24}.todo{color:#86efac}.path{display:inline;padding:4px 8px;border-radius:7px;background:#eee9e0;color:var(--navy);font-family:Consolas,monospace;font-size:.82rem;overflow-wrap:anywhere;word-break:break-word}
+    .table-scroll{width:100%;margin-top:16px;overflow-x:auto;border-radius:10px}.comparison{width:100%;min-width:660px;border-collapse:collapse;font-size:.9rem}.comparison th,.comparison td{border:1px solid var(--line);padding:10px;text-align:left;vertical-align:top}.comparison th{background:#f2eee7;color:var(--navy)}
+    details{margin-top:10px;border:1px solid var(--line);border-radius:12px;background:#fff}summary{padding:13px 15px;color:var(--navy);font-weight:800;cursor:pointer}details>div{padding:0 15px 15px;color:var(--muted)}
+    .checklist{display:grid;gap:10px;margin-top:16px}.check-item{display:flex;gap:10px;align-items:flex-start;padding:11px;border:1px solid var(--line);border-radius:10px;background:#fff}.check-item input{width:auto;margin-top:5px;accent-color:var(--green)}.check-item.done span{color:var(--muted);text-decoration:line-through}.recall{margin-top:15px;padding:16px;border:2px dashed var(--yellow);border-radius:14px;background:var(--yellow-soft)}textarea{width:100%;min-height:100px;margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:9px;resize:vertical}.save{color:var(--green);font-size:.8rem}.sources li{margin-bottom:8px}.sources small{color:var(--muted)}.footer{text-align:center;color:var(--muted);font-size:.82rem;padding:0 18px 30px}
+    @media(max-width:900px){.layout{grid-template-columns:1fr}.toc{position:static}.toc a{display:inline-block}.assignment-board{grid-template-columns:1fr}.grid-4{grid-template-columns:repeat(2,minmax(0,1fr))}.timeline{grid-template-columns:repeat(2,minmax(0,1fr))}.phase:not(:last-child):after{display:none}}
+    @media(max-width:680px){.grid-2,.grid-3,.grid-4,.timeline{grid-template-columns:1fr}.pointer-row{grid-template-columns:1fr}.hero{width:min(100% - 20px,1180px)}.layout{width:min(100% - 20px,1180px)}.lesson{padding:20px}.simulator{padding:12px}.partition-row{grid-template-columns:52px minmax(0,1fr)}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+  </style>
+</head>
+<body>
+  <a class="course-home" href="../../index.html" aria-label="Trang khóa học" style="position:fixed;right:14px;bottom:14px;z-index:9999;padding:9px 12px;border:2px solid #15233b;border-radius:999px;background:#fff;color:#15233b;font:800 13px/1.2 Inter,'Segoe UI',Arial,sans-serif;text-decoration:none;box-shadow:0 6px 18px rgba(21,35,59,.18)">⌂ Trang khóa học</a>
+  <header class="hero">
+    <div class="eyebrow">Kafka Spring Boot Visual Lab · Module 03</div>
+    <h1>Consumer Group & Rebalance</h1>
+    <p>Hiểu cách Kafka chia partition cho nhiều consumer, tại sao consumer dư phải ngồi chờ, offset thuộc về group nào và điều gì xảy ra khi một instance Spring Boot dừng.</p>
+    <div class="tags"><span class="tag">⏱ 45–60 phút</span><span class="tag">🧠 Java trước, Spring sau</span><span class="tag">🧪 Mô phỏng rebalance</span><span class="tag">🔍 Có log cần quan sát</span></div>
+    <div class="module-nav"><a class="secondary" href="kafka-visual-lab-module-01-02.html">← Module 1–2</a><a href="#simulator">Bắt đầu mô phỏng</a><a href="kafka-visual-lab-module-04-producer-reliability.html">Module 4 →</a></div>
+  </header>
+
+  <main class="layout">
+    <nav class="toc" aria-label="Mục lục">
+      <strong>Mục lục</strong>
+      <a href="#outcome">0. Kết quả cần đạt</a><a href="#mental">1. Mental model</a><a href="#rules">2. Ba quy tắc</a><a href="#simulator">3. Mô phỏng assignment</a><a href="#groups">4. Hai group, hai offset</a><a href="#rebalance">5. Rebalance</a><a href="#java-lab">6. Lab Java thuần</a><a href="#spring-lab">7. Lab Spring Boot</a><a href="#quiz">8. Kiểm tra</a><a href="#sources">Nguồn chuẩn</a>
+      <div class="progress-shell"><div class="progress-label"><span>Tiến độ lab</span><span id="progressText">0%</span></div><div class="progress-track"><div class="progress-bar" id="progressBar"></div></div></div>
+    </nav>
+
+    <div class="content">
+      <section class="lesson" id="outcome">
+        <span class="kicker">Điều kiện hoàn thành</span><h2>Sau bài này, bạn phải dự đoán được assignment</h2>
+        <div class="grid-4">
+          <article class="card"><span class="icon">👥</span><h3>Group</h3><p>Giải thích được cùng group và khác group ảnh hưởng đến delivery thế nào.</p></article>
+          <article class="card"><span class="icon">🛣️</span><h3>Ownership</h3><p>Tính được consumer nào có thể sở hữu bao nhiêu partition.</p></article>
+          <article class="card"><span class="icon">🔄</span><h3>Rebalance</h3><p>Dự đoán điều gì thay đổi khi consumer join, leave hoặc timeout.</p></article>
+          <article class="card"><span class="icon">🛠️</span><h3>Thực hành</h3><p>Chạy nhiều Spring Boot instance và chứng minh bằng log/CLI.</p></article>
+        </div>
+        <div class="callout warn"><strong>Quy tắc học:</strong> trước mỗi nút “thêm/bớt consumer”, hãy ghi dự đoán partition assignment ra giấy. Chạy xong mới so sánh.</div>
+      </section>
+
+      <section class="lesson" id="mental">
+        <span class="kicker">Mental model</span><h2>Partition là làn việc; consumer là công nhân trong một đội</h2>
+        <p class="lead">Trong cùng một consumer group, một partition tại một thời điểm chỉ có một consumer owner. Một consumer có thể sở hữu nhiều partition.</p>
+        <figure><img class="hero-image" src="../assets/kafka-consumer-group-rebalance.png" alt="Ví dụ các partition được phân công lại khi consumer C2 rời nhóm" /><figcaption>Đây là một ví dụ assignment, không phải cam kết C1/C3 luôn nhận đúng các partition như hình.</figcaption></figure>
+        <div class="callout blue"><strong>Ẩn dụ có giới hạn:</strong> consumer không “lấy mất” event khỏi topic. Group chỉ lưu tiến độ riêng; group khác vẫn có thể đọc cùng event.</div>
+      </section>
+
+      <section class="lesson" id="rules">
+        <span class="kicker">Ba quy tắc nền tảng</span><h2>Chỉ cần nhớ ba bất biến trước</h2>
+        <div class="grid-3">
+          <div class="rule"><span class="rule-num">1</span><div><h3>Một owner trong một group</h3><p>P2 không thể đồng thời thuộc C1 và C2 nếu họ cùng group.</p></div></div>
+          <div class="rule"><span class="rule-num">2</span><div><h3>Partition giới hạn parallelism</h3><p>4 partition chỉ có tối đa 4 consumer active cho group đó tại một thời điểm.</p></div></div>
+          <div class="rule"><span class="rule-num">3</span><div><h3>Mỗi group có tiến độ riêng</h3><p>Inventory đọc tới offset 10 không đẩy Analytics tới offset 10.</p></div></div>
+        </div>
+        <div class="table-scroll" tabindex="0"><table class="comparison"><thead><tr><th>Topology</th><th>Kết quả</th><th>Ý nghĩa</th></tr></thead><tbody>
+          <tr><td>4 partitions, 1 consumer</td><td>Consumer sở hữu cả 4.</td><td>Không có xử lý song song giữa nhiều consumer instance.</td></tr>
+          <tr><td>4 partitions, 2 consumers</td><td>Mỗi consumer thường nhận khoảng 2.</td><td>Tăng parallelism, assignment cụ thể phụ thuộc assignor/protocol.</td></tr>
+          <tr><td>4 partitions, 4 consumers</td><td>Mỗi consumer có thể nhận 1.</td><td>Đạt trần parallelism của group với topic này.</td></tr>
+          <tr><td>4 partitions, 5 consumers</td><td>Ít nhất 1 consumer idle.</td><td>Thêm instance không tạo thêm partition.</td></tr>
+        </tbody></table></div>
+      </section>
+
+      <section class="lesson" id="simulator">
+        <span class="kicker">Mô phỏng tương tác</span><h2>Thêm/bớt consumer và nhìn partition di chuyển</h2>
+        <p class="lead">Mô phỏng dùng round-robin đơn giản để minh họa invariant. Kafka thật có Range, RoundRobin, Sticky, Cooperative và consumer protocol mới.</p>
+        <div class="simulator">
+          <div class="sim-toolbar"><button class="btn" id="addConsumer" type="button">+ Thêm consumer</button><button class="btn red" id="removeConsumer" type="button">− Cho consumer cuối rời nhóm</button><button class="btn orange" id="addPartition" type="button">+ Thêm partition</button><button class="btn secondary" id="resetAssignment" type="button">Đặt lại</button></div>
+          <div class="sim-summary"><span class="metric" id="partitionMetric"></span><span class="metric" id="consumerMetric"></span><span class="metric idle" id="idleMetric"></span></div>
+          <div class="assignment-board"><div><h3>Topic: orders.v1</h3><div class="partition-list" id="partitionList"></div></div><div><h3>Group: inventory</h3><div class="consumer-list" id="consumerList"></div></div></div>
+          <div class="event-log" id="assignmentLog" aria-live="polite"></div>
+        </div>
+        <div class="callout green"><strong>Thử bắt buộc:</strong> đặt 4 partition, tăng lên 5 consumer. Xác định consumer idle. Sau đó cho consumer cuối rời nhóm và quan sát có partition nào phải đổi owner hay không.</div>
+      </section>
+
+      <section class="lesson" id="groups">
+        <span class="kicker">Offset theo group</span><h2>Cùng event, hai logical subscriber độc lập</h2>
+        <p class="lead">Tạo record trong P0, sau đó cho Inventory và Analytics đọc với tốc độ khác nhau. Hai con trỏ không kéo nhau đi.</p>
+        <div class="group-demo">
+          <div class="sim-toolbar"><button class="btn orange" id="produceRecord" type="button">+ Produce record</button><button class="btn secondary" id="resetGroups" type="button">Đặt lại</button></div>
+          <h3 style="margin-top:14px">orders.v1 · P0</h3><div class="topic-log" id="topicLog"><span class="lead">chưa có record</span></div>
+          <div class="pointers">
+            <div class="pointer-row"><strong>Group inventory</strong><div class="pointer-track"><div class="pointer-fill" id="inventoryFill"></div></div><button id="consumeInventory" type="button">Đọc 1</button></div>
+            <div class="pointer-row analytics"><strong>Group analytics</strong><div class="pointer-track"><div class="pointer-fill" id="analyticsFill"></div></div><button id="consumeAnalytics" type="button">Đọc 1</button></div>
+          </div>
+          <p class="lead" id="groupStatus" aria-live="polite" style="margin-top:12px">Hãy produce ít nhất 3 record.</p>
+        </div>
+        <div class="callout"><strong>Cùng group:</strong> các consumer chia workload. <strong>Khác group:</strong> mỗi group là một logical subscriber và có thể đọc toàn bộ stream theo tiến độ riêng.</div>
+      </section>
+
+      <section class="lesson" id="rebalance">
+        <span class="kicker">Cơ chế thay đổi assignment</span><h2>Rebalance không có nghĩa “message bị chia lại”</h2>
+        <div class="timeline"><article class="phase"><span>01 · THAY ĐỔI</span><h3>Membership/topology</h3><p>Consumer join/leave/timeout hoặc partition của topic thay đổi.</p></article><article class="phase"><span>02 · PHÁT HIỆN</span><h3>Group coordinator</h3><p>Nhóm cần cập nhật ownership của các partition.</p></article><article class="phase"><span>03 · ASSIGN</span><h3>Partition ownership</h3><p>Một số partition được giữ lại hoặc chuyển owner tùy protocol/assignor.</p></article><article class="phase"><span>04 · TIẾP TỤC</span><h3>Poll từ offset</h3><p>Owner mới tiếp tục đọc từ vị trí hợp lệ của group.</p></article></div>
+        <div class="protocol-toggle"><button class="btn" data-protocol="concept" aria-pressed="true">Mental model</button><button class="btn" data-protocol="classic" aria-pressed="false">Classic eager</button><button class="btn" data-protocol="incremental" aria-pressed="false">Incremental</button></div>
+        <div class="protocol-panel" id="protocolPanel"><p><strong>Mental model:</strong> rebalance là thay đổi ánh xạ partition → consumer. Hãy học invariant này trước, chưa cần thuộc gói tin protocol.</p></div>
+        <div class="callout red"><strong>Failure window:</strong> nếu consumer xử lý xong nhưng chưa commit offset rồi bị mất partition, record có thể được owner mới đọc lại. Đây là lý do consumer nghiệp vụ thường cần idempotency.</div>
+      </section>
+
+      <section class="lesson" id="java-lab">
+        <span class="kicker">Lab A · Java thuần</span><h2>Tự viết toy allocator trước khi dùng framework</h2>
+        <p class="lead">Dùng project Java 21 hiện tại. Không thêm Kafka dependency: mục tiêu là luyện <code>List</code>, <code>Map</code>, vòng lặp và reasoning.</p>
+        <p>Thư mục hiện tại: <a href="../../../senior-java-spring-mentor/practice-project/pom.xml" target="_blank"><span class="path">senior-java-spring-mentor/practice-project</span></a></p>
+        <div class="step-list">
+          <article class="step"><h3>Tạo package bài tập</h3><p>Tạo <span class="path">src/main/java/com/dream/learning/kafka/group</span>. Không sửa package <code>order</code>.</p></article>
+          <article class="step"><h3>Mô hình hóa partition</h3><p>Tự viết record <code>TopicPartition(String topic, int partition)</code>. Xác định trước điều kiện hợp lệ cho <code>partition</code>.</p></article>
+          <article class="step"><h3>Định nghĩa contract allocator</h3><p>Method nhận danh sách partition và consumer ID; trả về <code>Map&lt;String, List&lt;TopicPartition&gt;&gt;</code>. Chưa viết thuật toán trong bước này.</p>
+            <pre><code>public final class RoundRobinAllocator {
+    public Map&lt;String, List&lt;TopicPartition&gt;&gt; assign(
+            List&lt;TopicPartition&gt; partitions,
+            List&lt;String&gt; consumerIds) {
+        <span class="todo">// TODO 1: validate input</span>
+        <span class="todo">// TODO 2: tạo entry rỗng cho mọi consumer</span>
+        <span class="todo">// TODO 3: phân partition theo vòng tròn</span>
+        throw new UnsupportedOperationException("learner implementation");
+    }
+}</code></pre>
+          </article>
+          <article class="step"><h3>Viết dự đoán rồi mới code</h3><p>Với P0–P3 và C1–C3, viết assignment mong đợi. Xóa C2, viết assignment mới. Sau đó mới dùng công thức <code>partitionIndex % consumerCount</code>.</p></article>
+          <article class="step"><h3>Tạo chương trình quan sát rebalance</h3><p>In assignment trước và sau khi bỏ C2. In riêng các partition đổi owner. Không dùng thread ở bài này.</p></article>
+          <article class="step"><h3>Tự kiểm tra edge case</h3><p>0 consumer, consumer trùng ID, partition rỗng, nhiều consumer hơn partition. Bạn phải quyết định throw exception hay trả map rỗng và giải thích lý do.</p></article>
+        </div>
+        <div class="callout warn"><strong>Ranh giới mô phỏng:</strong> toy allocator không phải Kafka group coordinator và không mô phỏng heartbeat, poll, offset commit hay protocol. Nó chỉ làm rõ ownership.</div>
+      </section>
+
+      <section class="lesson" id="spring-lab">
+        <span class="kicker">Lab B · Spring Boot thật</span><h2>Chạy nhiều instance và nhìn rebalance trong log</h2>
+        <p class="lead">Tạo project riêng <span class="path">D:\2027\dream\kafka-consumer-group-lab</span> để không biến project Java nền tảng thành Spring Boot quá sớm.</p>
+        <div class="step-list">
+          <article class="step"><h3>Khởi tạo project</h3><p>Dùng Spring Initializr, Maven, Java 21 và dependency <strong>Spring for Apache Kafka</strong>. Có thể thêm Spring Web để tạo endpoint phát event. Chọn bản Spring Boot stable tương thích tại thời điểm tạo.</p></article>
+          <article class="step"><h3>Kết nối Kafka local</h3><p>Giữ Kafka từ bộ Docker hiện có và xác nhận broker truy cập được tại <code>localhost:9092</code>. Cấu hình bằng biến môi trường để mỗi instance có identity riêng.</p>
+            <pre><code>spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${APP_GROUP:inventory}
+      auto-offset-reset: earliest
+app:
+  instance-id: ${APP_INSTANCE:C1}
+  topic: orders.v1</code></pre>
+          </article>
+          <article class="step"><h3>Tạo topic 4 partition</h3><p>Dùng <code>NewTopic</code>/<code>TopicBuilder</code> hoặc Kafka CLI. Với môi trường một broker, replication factor là 1; nếu cluster của bạn có ba broker thì có thể dùng 3.</p>
+            <pre><code><span class="todo">// TODO: tạo @Bean NewTopic tên "orders.v1"</span>
+<span class="todo">// partitions = 4</span>
+<span class="todo">// replicas phù hợp số broker đang chạy</span></code></pre>
+          </article>
+          <article class="step"><h3>Viết listener có log quan sát</h3><p>Không chỉ nhận <code>String</code>. Nhận <code>ConsumerRecord&lt;String,String&gt;</code> để log instance, thread, partition, offset, key và value.</p>
+            <pre><code>@KafkaListener(topics = "${app.topic}")
+void on(ConsumerRecord&lt;String, String&gt; record) {
+    <span class="todo">// TODO: log app.instance-id</span>
+    <span class="todo">// TODO: log Thread.currentThread().getName()</span>
+    <span class="todo">// TODO: log partition, offset, key, value</span>
+}</code></pre>
+          </article>
+          <article class="step"><h3>Chạy ba instance cùng group</h3><p>Mở ba PowerShell. Dùng cùng <code>APP_GROUP=inventory</code>, đổi port và instance.</p>
+            <pre><code><span class="code-note"># Terminal 1</span>
+$env:SERVER_PORT=8081
+$env:APP_INSTANCE="C1"
+$env:APP_GROUP="inventory"
+mvn spring-boot:run
+
+<span class="code-note"># Terminal 2: dùng 8082 / C2 / inventory</span>
+<span class="code-note"># Terminal 3: dùng 8083 / C3 / inventory</span></code></pre>
+          </article>
+          <article class="step"><h3>Phát ít nhất 12 event có key</h3><p>Dùng endpoint producer từ Module 1–2 hoặc Kafka console producer. Chọn 4 key khác nhau và ghi dự đoán partition trước khi gửi.</p></article>
+          <article class="step"><h3>Chứng minh assignment bằng CLI</h3><p>Không kết luận chỉ vì nhìn một dòng log. Mô tả group và lưu kết quả trước/sau.</p>
+            <pre><code>kafka-consumer-groups \
+  --bootstrap-server localhost:9092 \
+  --describe --group inventory</code></pre>
+          </article>
+          <article class="step"><h3>Gây rebalance có kiểm soát</h3><p>Dừng C2 bằng <code>Ctrl+C</code>. Trước khi dừng, dự đoán C1/C3 sẽ nhận thêm bao nhiêu partition. Chạy lại lệnh describe sau khi group ổn định.</p></article>
+          <article class="step"><h3>Chứng minh group độc lập</h3><p>Chạy C4 với <code>APP_GROUP=analytics</code>. Với <code>auto-offset-reset=earliest</code> và group mới, quan sát Analytics đọc stream theo offset riêng.</p></article>
+        </div>
+
+        <h3 style="margin-top:22px">Điểm cần quan sát trong log</h3>
+        <div class="grid-3"><article class="card"><h3>Assignment</h3><p>Instance nào xử lý P0, P1, P2, P3 trước và sau khi C2 dừng?</p></article><article class="card"><h3>Offset</h3><p>Owner mới tiếp tục ở offset nào? Có record nào được đọc lại trong thử nghiệm?</p></article><article class="card"><h3>Idle</h3><p>Nếu chạy consumer thứ 5 cùng group với 4 partition, instance nào không nhận record?</p></article></div>
+        <div class="callout red"><strong>Đừng dùng <code>Thread.sleep()</code> để “sửa” rebalance.</strong> Nếu listener xử lý lâu hơn <code>max.poll.interval.ms</code>, hãy hiểu poll loop, batch size và thời gian xử lý trước khi tăng timeout.</div>
+      </section>
+
+      <section class="lesson" id="quiz">
+        <span class="kicker">Active recall</span><h2>Trả lời trước khi mở</h2>
+        <details><summary>1. Topic có 3 partition và group có 5 consumer. Bao nhiêu consumer có thể active?</summary><div>Tối đa 3 consumer có partition; ít nhất 2 consumer idle trong group đó.</div></details>
+        <details><summary>2. Hai consumer khác group có chia đôi message không?</summary><div>Không theo nghĩa workload sharing giữa hai group. Mỗi group là logical subscriber độc lập và có tiến độ offset riêng.</div></details>
+        <details><summary>3. Consumer C2 dừng thì event có chuyển từ partition này sang partition khác không?</summary><div>Không. Partition ownership chuyển sang consumer khác; record vẫn nằm trong partition ban đầu.</div></details>
+        <details><summary>4. Rebalance có luôn thu hồi toàn bộ partition khỏi mọi consumer không?</summary><div>Không. Classic eager có thể revoke rộng; cooperative và consumer protocol mới hỗ trợ thay đổi incremental. Học invariant assignment đổi, không học thuộc “luôn dừng toàn nhóm”.</div></details>
+        <details><summary>5. Vì sao rebalance có thể gây duplicate processing?</summary><div>Nếu xử lý side effect xong nhưng offset chưa được commit trước khi ownership mất, owner mới có thể đọc lại record. Consumer cần thiết kế idempotent.</div></details>
+        <details><summary>6. <code>concurrency=6</code> có giúp topic 3 partition nhanh gấp đôi <code>concurrency=3</code> không?</summary><div>Không theo parallelism partition của group đó; các consumer vượt số partition sẽ idle. Bottleneck còn phụ thuộc xử lý, I/O và broker.</div></details>
+        <div class="recall"><strong>Teach-back 90 giây</strong><p>Giải thích tình huống: orders.v1 có 4 partition, C1/C2/C3 cùng group inventory; C2 bị kill; C4 thuộc group analytics vừa khởi động.</p><textarea id="teachBack" placeholder="Viết ownership, offset và điều gì được/không được bảo đảm..."></textarea><div class="save" id="saveState">Nội dung được lưu cục bộ.</div></div>
+        <h3 style="margin-top:20px">Checklist bằng chứng</h3>
+        <div class="checklist"><label class="check-item"><input type="checkbox" data-progress><span>Dự đoán đúng assignment khi 4 partition có 1, 2, 4 và 5 consumer.</span></label><label class="check-item"><input type="checkbox" data-progress><span>Hoàn thành toy allocator Java và giải thích edge case 0 consumer.</span></label><label class="check-item"><input type="checkbox" data-progress><span>Chạy ít nhất 3 Spring Boot instance cùng group.</span></label><label class="check-item"><input type="checkbox" data-progress><span>Lưu output <code>kafka-consumer-groups --describe</code> trước/sau khi dừng C2.</span></label><label class="check-item"><input type="checkbox" data-progress><span>Chạy group analytics và chứng minh offset độc lập.</span></label><label class="check-item"><input type="checkbox" data-progress><span>Sau 24 giờ, trả lời sáu câu quiz không xem bài.</span></label></div>
+      </section>
+
+      <section class="lesson" id="sources">
+        <span class="kicker">Nguồn chuẩn</span><h2>Đối chiếu kỹ thuật</h2>
+        <ul class="sources">
+          <li><a href="https://kafka.apache.org/43/operations/consumer-rebalance-protocol/" target="_blank" rel="noreferrer">Apache Kafka — Consumer Rebalance Protocol</a><br><small>Consumer protocol mới, server-driven và incremental.</small></li>
+          <li><a href="https://kafka.apache.org/43/javadoc/org/apache/kafka/clients/consumer/ConsumerRebalanceListener.html" target="_blank" rel="noreferrer">Apache Kafka — ConsumerRebalanceListener</a><br><small>Nguyên nhân reassignment và callbacks assigned/revoked/lost.</small></li>
+          <li><a href="https://docs.spring.io/spring-kafka/reference/kafka/receiving-messages/message-listener-container.html" target="_blank" rel="noreferrer">Spring Kafka — Message Listener Containers</a><br><small>Concurrency, phân phối partition và listener containers.</small></li>
+          <li><a href="https://docs.spring.io/spring-kafka/reference/kafka/receiving-messages/listener-annotation.html" target="_blank" rel="noreferrer">Spring Kafka — @KafkaListener</a><br><small>Cấu hình listener, concurrency và container factory.</small></li>
+        </ul>
+        <div class="callout warn"><strong>Phiên bản:</strong> tài liệu Kafka/Spring thay đổi theo thời gian. Các invariant trong bài ổn định; property và protocol cụ thể phải kiểm tra theo version dự án.</div>
+      </section>
+    </div>
+  </main>
+  <p class="footer"><a href="kafka-visual-lab-module-04-producer-reliability.html"><strong>Học tiếp Module 4: Producer Reliability →</strong></a><br>Kafka Spring Boot Visual Lab · Module 3 · Dự đoán → chạy → quan sát → giải thích.</p>
+
+  <script>
+    const storeKey="kafka-visual-lab-m03";
+    const saved=JSON.parse(localStorage.getItem(storeKey)||"{}");
+    const colors=["#3978c5","#17865b","#7656b5","#c43d36","#9a6700","#087e8b","#c04c8a","#536878"];
+    let partitionCount=4,consumerCount=2,previousOwners=[];
+    const partitionList=document.getElementById("partitionList"),consumerList=document.getElementById("consumerList"),assignmentLog=document.getElementById("assignmentLog");
+    function stamp(){return new Date().toLocaleTimeString("vi-VN",{hour12:false});}
+    function log(text,type="ok"){const row=document.createElement("div");row.innerHTML=`<span class="log-time">[${stamp()}]</span> <span class="log-${type}">${text}</span>`;assignmentLog.prepend(row);}
+    function ownerFor(p){return p%consumerCount;}
+    function renderAssignment(reason="Khởi tạo group"){
+      const owners=Array.from({length:partitionCount},(_,p)=>ownerFor(p));partitionList.innerHTML="";consumerList.innerHTML="";
+      owners.forEach((owner,p)=>{const moved=previousOwners[p]!==undefined&&previousOwners[p]!==owner;const row=document.createElement("div");row.className=`partition-row${moved?" moved":""}`;row.innerHTML=`<div class="p-name">P${p}</div><div class="owner" style="--owner-color:${colors[owner]}">C${owner+1}${moved?" · đổi owner":""}</div>`;partitionList.appendChild(row);});
+      for(let c=0;c<consumerCount;c++){const owned=owners.map((owner,p)=>owner===c?p:null).filter(p=>p!==null);const el=document.createElement("div");el.className=`consumer${owned.length?"":" idle"}`;el.style.setProperty("--consumer-color",colors[c]);el.innerHTML=`<span>C${c+1}</span><small>${owned.length?owned.map(p=>`P${p}`).join(", "):"IDLE"}</small>`;consumerList.appendChild(el);}
+      const idle=Math.max(0,consumerCount-partitionCount);document.getElementById("partitionMetric").textContent=`${partitionCount} partitions`;document.getElementById("consumerMetric").textContent=`${consumerCount} consumers`;document.getElementById("idleMetric").textContent=`${idle} idle`;
+      const moved=owners.filter((o,p)=>previousOwners[p]!==undefined&&previousOwners[p]!==o).length;log(`${reason}. ${moved?`${moved} partition đổi owner.`:"Assignment ổn định."}`,moved?"move":"ok");previousOwners=owners;
+      document.getElementById("removeConsumer").disabled=consumerCount<=1;document.getElementById("addConsumer").disabled=consumerCount>=8;document.getElementById("addPartition").disabled=partitionCount>=8;
+    }
+    document.getElementById("addConsumer").onclick=()=>{consumerCount++;renderAssignment(`C${consumerCount} join group → rebalance`)};
+    document.getElementById("removeConsumer").onclick=()=>{const leaving=consumerCount;consumerCount--;renderAssignment(`C${leaving} rời group → rebalance`)};
+    document.getElementById("addPartition").onclick=()=>{partitionCount++;renderAssignment(`Topic tăng lên ${partitionCount} partition → rebalance`)};
+    document.getElementById("resetAssignment").onclick=()=>{partitionCount=4;consumerCount=2;previousOwners=[];assignmentLog.innerHTML="";renderAssignment("Đặt lại 4 partition / 2 consumer")};renderAssignment();
+
+    let records=[],positions={inventory:0,analytics:0};
+    const topicLog=document.getElementById("topicLog"),status=document.getElementById("groupStatus");
+    function renderGroups(){topicLog.innerHTML=records.length?records.map((v,i)=>`<div class="record"><strong>offset ${i}</strong><span>${v}</span></div>`).join(""):'<span class="lead">chưa có record</span>';for(const group of ["inventory","analytics"]){const pct=records.length?positions[group]/records.length*100:0;document.getElementById(`${group}Fill`).style.width=`${pct}%`;document.getElementById(`consume${group[0].toUpperCase()+group.slice(1)}`).disabled=positions[group]>=records.length;}status.textContent=`Inventory position=${positions.inventory}; Analytics position=${positions.analytics}; log end offset=${records.length}.`;}
+    document.getElementById("produceRecord").onclick=()=>{records.push(`E${records.length+1}`);renderGroups()};document.getElementById("consumeInventory").onclick=()=>{if(positions.inventory<records.length)positions.inventory++;renderGroups()};document.getElementById("consumeAnalytics").onclick=()=>{if(positions.analytics<records.length)positions.analytics++;renderGroups()};document.getElementById("resetGroups").onclick=()=>{records=[];positions={inventory:0,analytics:0};renderGroups()};renderGroups();
+
+    const protocolText={concept:"<strong>Mental model:</strong> rebalance là thay đổi ánh xạ partition → consumer. Hãy học invariant này trước, chưa cần thuộc gói tin protocol.",classic:"<strong>Classic eager:</strong> consumer có thể revoke toàn bộ assignment, nhóm tính lại rồi assign lại. Khoảng gián đoạn và partition movement có thể lớn hơn.",incremental:"<strong>Cooperative / Consumer protocol:</strong> chỉ các partition cần chuyển mới bị revoke/move theo từng bước. Không nên mô tả mọi rebalance hiện đại là stop-the-world."};
+    document.querySelectorAll("[data-protocol]").forEach(btn=>btn.onclick=()=>{document.querySelectorAll("[data-protocol]").forEach(b=>b.setAttribute("aria-pressed","false"));btn.setAttribute("aria-pressed","true");document.getElementById("protocolPanel").innerHTML=`<p>${protocolText[btn.dataset.protocol]}</p>`});
+
+    const teachBack=document.getElementById("teachBack");teachBack.value=saved.teachBack||"";let timer;teachBack.oninput=()=>{document.getElementById("saveState").textContent="Đang lưu cục bộ...";clearTimeout(timer);timer=setTimeout(()=>{saved.teachBack=teachBack.value;localStorage.setItem(storeKey,JSON.stringify(saved));document.getElementById("saveState").textContent="Đã lưu cục bộ."},300)};
+    const checks=[...document.querySelectorAll("[data-progress]")],restored=new Set(saved.checks||[]);checks.forEach((cb,i)=>{cb.checked=restored.has(i);cb.closest(".check-item").classList.toggle("done",cb.checked);cb.onchange=()=>{cb.closest(".check-item").classList.toggle("done",cb.checked);saved.checks=checks.map((x,j)=>x.checked?j:null).filter(x=>x!==null);localStorage.setItem(storeKey,JSON.stringify(saved));updateProgress()}});
+    function updateProgress(){const pct=Math.round(checks.filter(x=>x.checked).length/checks.length*100);document.getElementById("progressBar").style.width=`${pct}%`;document.getElementById("progressText").textContent=`${pct}%`}updateProgress();
+  </script>
+</body>
+</html>

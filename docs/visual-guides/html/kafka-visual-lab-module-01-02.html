@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Kafka Spring Boot Visual Lab — Module 1–2: Event-driven architecture, event, broker, topic, partition và offset." />
+  <title>Kafka Spring Boot Visual Lab — Module 1–2</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f3ed;
+      --paper: #fffdf8;
+      --ink: #172033;
+      --muted: #667085;
+      --line: #d8d2c8;
+      --navy: #17365d;
+      --blue: #3978c5;
+      --blue-soft: #e9f2ff;
+      --orange: #e97817;
+      --orange-soft: #fff0df;
+      --green: #17865b;
+      --green-soft: #e8f7f0;
+      --yellow: #f5c451;
+      --yellow-soft: #fff8dc;
+      --red: #c43d36;
+      --red-soft: #fff0ee;
+      --shadow: 0 14px 38px rgba(38, 44, 57, 0.09);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 15% 5%, rgba(233, 120, 23, 0.10), transparent 27rem),
+        radial-gradient(circle at 90% 10%, rgba(57, 120, 197, 0.10), transparent 30rem),
+        var(--bg);
+      color: var(--ink);
+      line-height: 1.65;
+    }
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; }
+    a { color: var(--blue); }
+    code, pre { font-family: "Cascadia Code", "Fira Code", Consolas, monospace; }
+
+    .hero {
+      width: min(1180px, calc(100% - 32px));
+      margin: 22px auto 0;
+      padding: clamp(26px, 5vw, 58px);
+      border: 1px solid rgba(23, 54, 93, 0.12);
+      border-radius: 26px;
+      background: rgba(255, 253, 248, 0.92);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      border: 46px solid rgba(233, 120, 23, 0.08);
+      border-radius: 50%;
+      right: -80px;
+      top: -90px;
+    }
+    .eyebrow {
+      color: var(--orange);
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    h1, h2, h3 { line-height: 1.2; margin: 0; color: var(--navy); }
+    h1 { margin-top: 10px; max-width: 880px; font-size: clamp(2rem, 5vw, 4rem); letter-spacing: -0.04em; }
+    h2 { font-size: clamp(1.45rem, 3vw, 2.15rem); }
+    h3 { font-size: 1.1rem; }
+    .hero p { max-width: 820px; margin: 18px 0 0; color: var(--muted); font-size: 1.05rem; }
+    .tag-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 22px; }
+    .tag {
+      padding: 7px 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 250px minmax(0, 1fr);
+      gap: 26px;
+      width: min(1180px, calc(100% - 32px));
+      margin: 28px auto 70px;
+    }
+    .toc {
+      position: sticky;
+      top: 16px;
+      align-self: start;
+      padding: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255, 253, 248, 0.94);
+      backdrop-filter: blur(12px);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 25px rgba(38, 44, 57, 0.06);
+    }
+    .toc strong { color: var(--navy); }
+    .toc a {
+      display: block;
+      padding: 8px 9px;
+      margin-top: 4px;
+      color: var(--muted);
+      border-radius: 9px;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .toc a:hover, .toc a:focus { color: var(--navy); background: var(--orange-soft); }
+    .progress-shell { margin-top: 16px; }
+    .progress-label { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.78rem; }
+    .progress-track { height: 8px; margin-top: 6px; border-radius: 99px; background: #e8e3da; overflow: hidden; }
+    .progress-bar { width: 0; height: 100%; background: linear-gradient(90deg, var(--orange), var(--yellow)); transition: width 260ms ease; }
+
+    .content { min-width: 0; }
+    .lesson {
+      margin-bottom: 20px;
+      padding: clamp(20px, 4vw, 34px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+      box-shadow: 0 9px 28px rgba(38, 44, 57, 0.055);
+      scroll-margin-top: 18px;
+    }
+    .section-kicker { display: block; margin-bottom: 8px; color: var(--orange); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
+    .lead { color: var(--muted); font-size: 1.02rem; }
+    .callout {
+      margin: 18px 0;
+      padding: 15px 18px;
+      border-left: 5px solid var(--orange);
+      border-radius: 0 12px 12px 0;
+      background: var(--orange-soft);
+    }
+    .callout.blue { border-color: var(--blue); background: var(--blue-soft); }
+    .callout.green { border-color: var(--green); background: var(--green-soft); }
+    .callout.warn { border-color: var(--yellow); background: var(--yellow-soft); }
+    .callout strong { color: var(--navy); }
+
+    figure { margin: 22px 0 0; }
+    .hero-image {
+      display: block;
+      width: 100%;
+      margin: 0;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: white;
+    }
+    figcaption { margin-top: 8px; color: var(--muted); font-size: 0.83rem; }
+
+    .grid-2, .grid-3, .grid-4 { display: grid; gap: 14px; margin-top: 18px; }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .card {
+      padding: 17px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+    }
+    .card p { margin: 8px 0 0; color: var(--muted); font-size: 0.92rem; }
+    .card .icon { display: inline-grid; place-items: center; width: 38px; height: 38px; margin-bottom: 10px; border-radius: 12px; background: var(--orange-soft); font-size: 1.2rem; }
+
+    .table-scroll { width: 100%; margin-top: 18px; overflow-x: auto; border-radius: 10px; }
+    .comparison { width: 100%; min-width: 680px; border-collapse: collapse; margin: 0; font-size: 0.92rem; }
+    .comparison th, .comparison td { border: 1px solid var(--line); padding: 11px; text-align: left; vertical-align: top; }
+    .comparison th { background: #f2eee7; color: var(--navy); }
+
+    .flow-stage {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr 1.1fr 1fr;
+      align-items: center;
+      gap: 50px;
+      min-height: 230px;
+      margin-top: 20px;
+      padding: 24px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: linear-gradient(180deg, #fff, #faf7f0);
+    }
+    .node { position: relative; z-index: 2; padding: 18px 12px; text-align: center; border: 2px solid var(--blue); border-radius: 16px; background: var(--blue-soft); font-weight: 800; color: var(--navy); }
+    .node.kafka { border-color: var(--orange); background: var(--orange-soft); }
+    .consumer-stack { display: grid; gap: 8px; }
+    .consumer-stack .node { padding: 9px; font-size: 0.84rem; border-width: 1px; }
+    .flow-line { position: absolute; left: 17%; right: 17%; top: 50%; height: 4px; background: repeating-linear-gradient(90deg, var(--orange) 0 12px, transparent 12px 20px); transform: translateY(-50%); }
+    .event-dot { position: absolute; z-index: 5; left: 15%; top: calc(50% - 13px); width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: var(--orange); color: white; font-size: 0.75rem; opacity: 0; box-shadow: 0 4px 12px rgba(233, 120, 23, 0.38); }
+    .flow-stage.running .event-dot { animation: event-journey 2.5s ease-in-out; }
+    @keyframes event-journey {
+      0% { left: 15%; opacity: 0; transform: scale(0.5); }
+      12% { opacity: 1; transform: scale(1); }
+      48% { left: 47%; opacity: 1; }
+      65% { left: 47%; transform: scale(1.35); }
+      92% { left: 82%; opacity: 1; transform: scale(1); }
+      100% { left: 82%; opacity: 0; transform: scale(0.5); }
+    }
+    .action-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
+    .btn {
+      border: 0;
+      padding: 10px 15px;
+      border-radius: 10px;
+      background: var(--navy);
+      color: white;
+      font-weight: 750;
+      box-shadow: 0 5px 13px rgba(23, 54, 93, 0.16);
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn.secondary { color: var(--navy); background: #ebe7df; box-shadow: none; }
+    .status { color: var(--muted); font-size: 0.9rem; }
+
+    .event-anatomy {
+      display: grid;
+      grid-template-columns: 145px 1fr;
+      gap: 0;
+      margin-top: 18px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: white;
+    }
+    .event-anatomy dt, .event-anatomy dd { margin: 0; padding: 13px 15px; border-bottom: 1px solid var(--line); }
+    .event-anatomy dt { color: var(--navy); background: #f2eee7; font-weight: 800; }
+    .event-anatomy dd { color: var(--muted); }
+    .event-anatomy dt:last-of-type, .event-anatomy dd:last-of-type { border-bottom: 0; }
+
+    pre { margin: 16px 0 0; padding: 18px; overflow: auto; border-radius: 13px; background: #111827; color: #e5e7eb; font-size: 0.88rem; line-height: 1.55; }
+    .code-note { color: #fbbf24; }
+
+    .simulator {
+      margin-top: 18px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: linear-gradient(180deg, #fff, #faf7f0);
+    }
+    .sim-controls { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
+    label { display: grid; gap: 5px; color: var(--muted); font-size: 0.82rem; font-weight: 700; }
+    input, textarea { width: 100%; border: 1px solid var(--line); border-radius: 9px; padding: 10px 11px; background: white; color: var(--ink); }
+    input:focus, textarea:focus { outline: 3px solid rgba(57, 120, 197, 0.16); border-color: var(--blue); }
+    .partitions { display: grid; gap: 10px; margin-top: 18px; }
+    .partition {
+      display: grid;
+      grid-template-columns: 105px minmax(0, 1fr);
+      align-items: stretch;
+      min-height: 74px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      background: white;
+    }
+    .partition-name { display: grid; place-items: center; padding: 10px; color: white; background: var(--navy); font-weight: 800; }
+    .partition-log { display: flex; gap: 8px; align-items: center; padding: 10px; overflow-x: auto; }
+    .record {
+      min-width: 112px;
+      padding: 8px;
+      border: 2px solid var(--orange);
+      border-radius: 10px;
+      background: var(--orange-soft);
+      animation: record-in 420ms ease-out;
+    }
+    .record strong { display: block; color: var(--navy); font-size: 0.78rem; }
+    .record span { display: block; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 0.72rem; }
+    @keyframes record-in { from { opacity: 0; transform: translateX(-18px) scale(0.86); } to { opacity: 1; transform: none; } }
+    .sim-result { min-height: 24px; margin-top: 12px; color: var(--green); font-weight: 750; }
+
+    details { margin-top: 10px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+    summary { padding: 13px 15px; color: var(--navy); font-weight: 800; cursor: pointer; }
+    details > div { padding: 0 15px 15px; color: var(--muted); }
+
+    .checklist { display: grid; gap: 10px; margin-top: 16px; }
+    .check-item { display: flex; gap: 10px; align-items: flex-start; padding: 11px; border: 1px solid var(--line); border-radius: 10px; background: white; }
+    .check-item input { width: auto; margin-top: 5px; accent-color: var(--green); }
+    .check-item.done span { color: var(--muted); text-decoration: line-through; }
+
+    .recall-card { margin-top: 15px; padding: 16px; border: 2px dashed var(--yellow); border-radius: 14px; background: var(--yellow-soft); }
+    .recall-card textarea { min-height: 105px; margin-top: 8px; resize: vertical; }
+    .save-state { color: var(--green); font-size: 0.8rem; }
+
+    .source-list li { margin-bottom: 8px; }
+    .source-list small { color: var(--muted); }
+    .footer-note { text-align: center; color: var(--muted); font-size: 0.82rem; padding: 0 18px 30px; }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .toc { position: static; }
+      .toc a { display: inline-block; }
+      .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 680px) {
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      .flow-stage { grid-template-columns: 1fr; gap: 12px; }
+      .flow-line { display: none; }
+      .event-dot { display: none; }
+      .sim-controls { grid-template-columns: 1fr; }
+      .partition { grid-template-columns: 82px minmax(0, 1fr); }
+      .event-anatomy { grid-template-columns: 105px 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <a class="course-home" href="../../index.html" aria-label="Trang khóa học" style="position:fixed;right:14px;bottom:14px;z-index:9999;padding:9px 12px;border:2px solid #15233b;border-radius:999px;background:#fff;color:#15233b;font:800 13px/1.2 Inter,'Segoe UI',Arial,sans-serif;text-decoration:none;box-shadow:0 6px 18px rgba(21,35,59,.18)">⌂ Trang khóa học</a>
+  <header class="hero">
+    <div class="eyebrow">Kafka Spring Boot Visual Lab · Bản mẫu 01</div>
+    <h1>Từ “service gọi service” đến dòng sự kiện Kafka</h1>
+    <p>Module 1–2 xây mental model nền tảng: Kafka giải quyết vấn đề gì, một event gồm những gì, và cách <strong>topic → partition → offset</strong> tổ chức dữ liệu. Học bằng quan sát và thử nghiệm, không học thuộc định nghĩa.</p>
+    <div class="tag-row">
+      <span class="tag">⏱ 25–35 phút</span>
+      <span class="tag">🎯 Trình độ: nền tảng</span>
+      <span class="tag">🧠 Active recall</span>
+      <span class="tag">🧪 Có mô phỏng partition</span>
+    </div>
+  </header>
+
+  <main class="layout">
+    <nav class="toc" aria-label="Mục lục">
+      <strong>Mục lục</strong>
+      <a href="#contract">0. Cách học bài này</a>
+      <a href="#problem">1. Vấn đề Kafka giải quyết</a>
+      <a href="#flow">2. Luồng event chạy thế nào</a>
+      <a href="#event">3. Event là gì</a>
+      <a href="#core">4. Thành phần Kafka</a>
+      <a href="#partition">5. Partition & offset</a>
+      <a href="#spring">6. Nhìn trước Spring Boot</a>
+      <a href="#quiz">7. Kiểm tra trí nhớ</a>
+      <a href="#lab">8. Bài tự làm</a>
+      <a href="#sources">Nguồn chuẩn</a>
+      <div class="progress-shell">
+        <div class="progress-label"><span>Tiến độ</span><span id="progressText">0%</span></div>
+        <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+      </div>
+    </nav>
+
+    <div class="content">
+      <section class="lesson" id="contract">
+        <span class="section-kicker">Hợp đồng học tập</span>
+        <h2>Đọc ít hơn, nhớ bằng cách tự gọi lại</h2>
+        <div class="grid-3">
+          <article class="card"><span class="icon">👀</span><h3>Quan sát</h3><p>Xem sơ đồ và animation một lần. Tập trung vào hướng mũi tên và trách nhiệm của từng thành phần.</p></article>
+          <article class="card"><span class="icon">🧠</span><h3>Che đáp án</h3><p>Tự nói lại bằng lời của bạn. Không cần đúng thuật ngữ ngay; cần đúng quan hệ nhân quả.</p></article>
+          <article class="card"><span class="icon">🛠️</span><h3>Làm lại</h3><p>Dùng mô phỏng và bài lab. Một khái niệm chỉ được xem là biết khi bạn dự đoán được kết quả.</p></article>
+        </div>
+        <div class="callout warn"><strong>Điểm xuất phát của bạn:</strong> bộ ghi chú đã có kiến thức khá đầy đủ nhưng trải rộng từ cơ bản đến Saga, retry, DLT và Kafka Connect. Bản lab này gom lại theo dependency: hiểu event và partition trước, rồi mới học consumer group, reliability và transaction.</div>
+      </section>
+
+      <section class="lesson" id="problem">
+        <span class="section-kicker">Module 1 · Mental model</span>
+        <h2>Kafka không chỉ là “gửi message”</h2>
+        <p class="lead">Kafka tạo ra một dòng sự kiện bền vững ở giữa các hệ thống. Producer công bố sự thật đã xảy ra; các consumer tự quyết định khi nào và cách xử lý.</p>
+        <figure>
+          <img class="hero-image" src="../assets/kafka-eda-direct-vs-event.png" alt="So sánh gọi trực tiếp giữa các microservice với xuất bản sự kiện qua Kafka" />
+          <figcaption>Hình ghi nhớ: đường đỏ = phụ thuộc trực tiếp; dòng cam = sự kiện được lưu để consumer xử lý độc lập.</figcaption>
+        </figure>
+
+        <div class="table-scroll" tabindex="0" aria-label="Bảng so sánh HTTP trực tiếp và Kafka">
+        <table class="comparison">
+          <thead><tr><th>Câu hỏi</th><th>HTTP trực tiếp</th><th>Kafka / event-driven</th></tr></thead>
+          <tbody>
+            <tr><td>Producer có cần biết nơi nhận?</td><td>Có, thường cần URL và contract của service đích.</td><td>Không cần biết từng consumer; cần biết topic và event contract.</td></tr>
+            <tr><td>Service nhận đang dừng?</td><td>Request có thể timeout/fail; bên gọi phải xử lý.</td><td>Event có thể còn trong topic để consumer đọc khi hoạt động lại, tùy retention và offset.</td></tr>
+            <tr><td>Cần kết quả ngay?</td><td>Phù hợp nếu cần phản hồi đồng bộ ngay lập tức.</td><td>Không phù hợp nếu caller bắt buộc phải có kết quả cuối ngay trong cùng request.</td></tr>
+            <tr><td>Thêm một bên nhận mới?</td><td>Thường phải thêm lời gọi hoặc thay đổi orchestration.</td><td>Consumer mới có thể subscribe mà không bắt producer gọi trực tiếp nó.</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <div class="callout blue"><strong>Không dùng Kafka cho mọi thứ.</strong> Tra cứu dữ liệu cần phản hồi ngay, xác thực request hoặc thao tác CRUD đơn giản thường hợp với HTTP. Kafka hữu ích khi cần decoupling, buffering, fan-out, replay hoặc xử lý bất đồng bộ.</div>
+      </section>
+
+      <section class="lesson" id="flow">
+        <span class="section-kicker">Quan sát luồng chạy</span>
+        <h2>Một event đi qua hệ thống</h2>
+        <p>Nhấn nút và đọc thành tiếng ba bước: <strong>publish → store → consume</strong>.</p>
+        <div class="flow-stage" id="flowStage" aria-label="Animation luồng sự kiện">
+          <div class="flow-line"></div>
+          <div class="event-dot">E</div>
+          <div class="node">① PRODUCER<br><small>Order Service</small></div>
+          <div class="node kafka">② KAFKA TOPIC<br><small>lưu event bền vững</small></div>
+          <div class="consumer-stack">
+            <div class="node">③ Payment</div>
+            <div class="node">③ Inventory</div>
+            <div class="node">③ Notification</div>
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="btn" id="playFlow" type="button">▶ Phát OrderCreated</button>
+          <span class="status" id="flowStatus" aria-live="polite">Sẵn sàng.</span>
+        </div>
+        <div class="grid-3">
+          <article class="card"><h3>① Publish</h3><p>Order Service gửi event vào topic. Nó không gọi trực tiếp ba consumer.</p></article>
+          <article class="card"><h3>② Store</h3><p>Broker append event vào một partition. Việc consumer đọc không tự động xóa event.</p></article>
+          <article class="card"><h3>③ Consume</h3><p>Mỗi ứng dụng quan tâm đọc và duy trì tiến độ riêng thông qua consumer group/offset.</p></article>
+        </div>
+      </section>
+
+      <section class="lesson" id="event">
+        <span class="section-kicker">Module 2 · Dữ liệu</span>
+        <h2>Event là một sự thật đã xảy ra</h2>
+        <p class="lead"><code>OrderCreated</code> tốt hơn <code>CreateOrder</code> khi mục đích là thông báo: order đã được tạo. Event nên mô tả quá khứ, không ra lệnh cho một consumer cụ thể.</p>
+        <dl class="event-anatomy">
+          <dt>Key</dt><dd><code>order-742</code> — giúp định tuyến partition và giữ thứ tự cho cùng một thực thể.</dd>
+          <dt>Value</dt><dd>Payload nghiệp vụ, ví dụ <code>{ orderId, customerId, total }</code>.</dd>
+          <dt>Timestamp</dt><dd>Thời điểm event được tạo hoặc được Kafka ghi nhận, tùy timestamp type.</dd>
+          <dt>Headers</dt><dd>Metadata tùy chọn như correlation ID, schema version hoặc message ID.</dd>
+        </dl>
+        <pre><code>{
+  <span class="code-note">"eventType"</span>: "OrderCreated",
+  <span class="code-note">"eventId"</span>: "4d86...",
+  <span class="code-note">"occurredAt"</span>: "2026-08-23T15:10:00Z",
+  <span class="code-note">"orderId"</span>: "order-742",
+  <span class="code-note">"total"</span>: 1250000
+}</code></pre>
+        <div class="grid-2">
+          <article class="card"><h3>Event ≠ trạng thái hiện tại</h3><p>Event là điều đã xảy ra. Nếu dữ liệu hiện tại thay đổi, event cũ vẫn là lịch sử hợp lệ.</p></article>
+          <article class="card"><h3>Event ≠ lời gọi method từ xa</h3><p>Producer không nên biết chính xác consumer nào sẽ nhận và thực hiện method nào.</p></article>
+        </div>
+      </section>
+
+      <section class="lesson" id="core">
+        <span class="section-kicker">Bản đồ thành phần</span>
+        <h2>Năm mảnh ghép phải phân biệt</h2>
+        <div class="grid-3">
+          <article class="card"><span class="icon">📤</span><h3>Producer</h3><p>Ứng dụng ghi event. Producer chọn topic và có thể cung cấp key.</p></article>
+          <article class="card"><span class="icon">🗄️</span><h3>Broker</h3><p>Kafka server nhận, lưu và phục vụ dữ liệu. Một cluster thường có nhiều broker.</p></article>
+          <article class="card"><span class="icon">📚</span><h3>Topic</h3><p>Luồng dữ liệu có tên. Topic có retention và được chia thành nhiều partition.</p></article>
+          <article class="card"><span class="icon">🛣️</span><h3>Partition</h3><p>Append-only log có thứ tự. Đây là đơn vị song song hóa và replication.</p></article>
+          <article class="card"><span class="icon">📥</span><h3>Consumer</h3><p>Ứng dụng đọc event. Consumer có thể đọc lại vì event không biến mất ngay sau khi đọc.</p></article>
+          <article class="card"><span class="icon">🔖</span><h3>Offset</h3><p>Vị trí tuần tự của record trong một partition; không phải ID toàn cục của event.</p></article>
+        </div>
+        <div class="callout green"><strong>Câu nhớ nhanh:</strong> Producer ghi vào <em>topic</em>; broker lưu topic thành các <em>partition</em>; mỗi record có <em>offset</em>; consumer đọc theo tiến độ của nhóm.</div>
+      </section>
+
+      <section class="lesson" id="partition">
+        <span class="section-kicker">Mô phỏng tương tác</span>
+        <h2>Key quyết định “làn đường”; offset là “số ghế” trong làn</h2>
+        <p class="lead">Nhập nhiều event. Hãy thử cùng key <code>order-101</code> ba lần, rồi đổi thành <code>order-202</code>. Quan sát partition và offset.</p>
+        <div class="simulator">
+          <div class="sim-controls">
+            <label>Event key
+              <input id="eventKey" value="order-101" autocomplete="off" />
+            </label>
+            <label>Event value ngắn
+              <input id="eventValue" value="CREATED" autocomplete="off" />
+            </label>
+            <button class="btn" id="sendEvent" type="button">Gửi event</button>
+          </div>
+          <div class="partitions" id="partitionBoard">
+            <div class="partition"><div class="partition-name">P0</div><div class="partition-log" data-partition="0"><span class="status">chưa có record</span></div></div>
+            <div class="partition"><div class="partition-name">P1</div><div class="partition-log" data-partition="1"><span class="status">chưa có record</span></div></div>
+            <div class="partition"><div class="partition-name">P2</div><div class="partition-log" data-partition="2"><span class="status">chưa có record</span></div></div>
+          </div>
+          <div class="sim-result" id="simResult" aria-live="polite">Chưa gửi event.</div>
+          <div class="action-row"><button class="btn secondary" id="resetSim" type="button">Đặt lại mô phỏng</button></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="callout"><strong>Ordering:</strong> Kafka bảo đảm thứ tự trong một topic-partition. Không có một thứ tự toàn cục tự nhiên giữa P0, P1 và P2.</div>
+          <div class="callout blue"><strong>Parallelism:</strong> nhiều partition cho phép nhiều consumer trong cùng group xử lý song song; partition là giới hạn song song tại một thời điểm.</div>
+        </div>
+        <div class="callout warn"><strong>Bẫy dễ quên:</strong> nếu tăng số lượng partition, phép ánh xạ key → partition có thể thay đổi. “Cùng key vào cùng partition” được hiểu trong topology partition hiện tại.</div>
+        <small class="status">Mô phỏng dùng thuật toán Murmur2 trên key UTF‑8 và 3 partition, tương ứng nguyên lý partitioning của Kafka client cho record có key.</small>
+      </section>
+
+      <section class="lesson" id="spring">
+        <span class="section-kicker">Cầu nối sang Spring Boot</span>
+        <h2>Hai dòng code, nhưng phía dưới là cả mental model</h2>
+        <p class="lead">Spring Boot tự cấu hình hạ tầng Kafka qua <code>spring.kafka.*</code>. Bạn vẫn phải hiểu topic, key, serialization và failure semantics để dùng đúng.</p>
+        <div class="grid-2">
+          <div>
+            <h3>Producer</h3>
+            <pre><code>kafkaTemplate.send(
+    "order-events",
+    event.orderId(),  <span class="code-note">// key</span>
+    event             <span class="code-note">// value</span>
+);</code></pre>
+          </div>
+          <div>
+            <h3>Consumer</h3>
+            <pre><code>@KafkaListener(
+    topics = "order-events",
+    groupId = "inventory"
+)
+void on(OrderCreated event) {
+    <span class="code-note">// xử lý nghiệp vụ</span>
+}</code></pre>
+          </div>
+        </div>
+        <div class="callout blue"><strong>Chưa cần copy code.</strong> Trước tiên hãy trả lời: event vào topic nào, key là gì, cùng order có giữ thứ tự không, consumer lỗi thì offset sẽ ra sao? Module sau mới triển khai producer/consumer thật.</div>
+      </section>
+
+      <section class="lesson" id="quiz">
+        <span class="section-kicker">Active recall</span>
+        <h2>Trả lời trước khi mở đáp án</h2>
+        <details><summary>1. Consumer đọc xong thì event có bị xóa khỏi topic không?</summary><div>Không. Kafka giữ event theo chính sách retention/compaction. Tiến độ đọc của consumer group được biểu diễn bằng offset đã commit.</div></details>
+        <details><summary>2. Kafka bảo đảm thứ tự cho toàn bộ topic hay cho từng partition?</summary><div>Cho từng partition. Hai record ở hai partition khác nhau không có thứ tự toàn cục được Kafka bảo đảm.</div></details>
+        <details><summary>3. Vì sao event key quan trọng?</summary><div>Key tham gia chọn partition. Các event có cùng key có thể đi cùng partition, nhờ đó giữ thứ tự cho cùng một thực thể như một order.</div></details>
+        <details><summary>4. Offset có phải message ID duy nhất không?</summary><div>Không. Offset chỉ duy nhất trong phạm vi một topic-partition. Event ID nên là một trường riêng nếu cần deduplication hoặc trace.</div></details>
+        <details><summary>5. Khi nào HTTP trực tiếp hợp lý hơn Kafka?</summary><div>Khi caller cần kết quả ngay, luồng đơn giản, quan hệ request/response rõ ràng và không có nhu cầu buffering, replay hoặc fan-out.</div></details>
+        <details><summary>6. Broker khác topic thế nào?</summary><div>Broker là tiến trình/server Kafka. Topic là luồng dữ liệu logic; các partition của topic được phân bố và replicated trên broker.</div></details>
+
+        <div class="recall-card">
+          <strong>Teach-back 90 giây</strong>
+          <p>Không nhìn phía trên, giải thích bằng lời của bạn: “OrderCreated đi từ Spring Boot producer tới ba consumer như thế nào?”</p>
+          <textarea id="teachBack" placeholder="Viết bằng lời của bạn, không cần văn mẫu..."></textarea>
+          <div class="save-state" id="saveState">Nội dung được lưu cục bộ trong trình duyệt.</div>
+        </div>
+      </section>
+
+      <section class="lesson" id="lab">
+        <span class="section-kicker">Bằng chứng đã hiểu</span>
+        <h2>Bài tự làm — chưa cần Spring Boot</h2>
+        <p class="lead">Mục tiêu là chứng minh mental model trước khi framework che bớt chi tiết.</p>
+        <div class="checklist" id="checklist">
+          <label class="check-item"><input type="checkbox" data-progress /><span>Vẽ lại bằng tay: Producer → Topic → 3 partitions → Consumer.</span></label>
+          <label class="check-item"><input type="checkbox" data-progress /><span>Dùng mô phỏng gửi 3 event cùng key và nói đúng partition/offset trước khi nhấn.</span></label>
+          <label class="check-item"><input type="checkbox" data-progress /><span>Gửi 2 key khác nhau và giải thích vì sao chúng có thể xử lý song song.</span></label>
+          <label class="check-item"><input type="checkbox" data-progress /><span>Trả lời không nhìn tài liệu: “Ordering của Kafka có phạm vi nào?”</span></label>
+          <label class="check-item"><input type="checkbox" data-progress /><span>Nêu một tình huống nên dùng HTTP thay vì Kafka.</span></label>
+          <label class="check-item"><input type="checkbox" data-progress /><span>Sau 24 giờ, mở lại trang và trả lời sáu câu quiz trước khi đọc bài.</span></label>
+        </div>
+        <div class="callout green"><strong>Tiêu chuẩn hoàn thành:</strong> dự đoán đúng trước khi chạy, không phải “đã đọc hết trang”. Ôn lại vào ngày 1, 3, 7 và 14.</div>
+      </section>
+
+      <section class="lesson" id="sources">
+        <span class="section-kicker">Nguồn và độ tin cậy</span>
+        <h2>Nội dung được đối chiếu từ đâu?</h2>
+        <ul class="source-list">
+          <li><a href="https://kafka.apache.org/documentation/" target="_blank" rel="noreferrer">Apache Kafka — Introduction & Documentation</a><br><small>Khái niệm event, topic, partition, ordering, replication và API.</small></li>
+          <li><a href="https://docs.spring.io/spring-boot/reference/messaging/kafka.html" target="_blank" rel="noreferrer">Spring Boot — Apache Kafka Support</a><br><small>Auto-configuration, <code>spring.kafka.*</code>, <code>KafkaTemplate</code> và <code>@KafkaListener</code>.</small></li>
+          <li><a href="https://docs.spring.io/spring-kafka/reference/kafka.html" target="_blank" rel="noreferrer">Spring for Apache Kafka Reference</a><br><small>Tài liệu chuyên sâu về producer, consumer, serialization, error handling, transaction và monitoring.</small></li>
+        </ul>
+        <div class="callout warn"><strong>Nguyên tắc cập nhật:</strong> ghi chú giúp giữ ngữ cảnh học của bạn; tài liệu Apache/Spring là nguồn chuẩn khi có khác biệt về hành vi hoặc phiên bản.</div>
+      </section>
+    </div>
+  </main>
+
+  <p class="footer-note"><a href="kafka-visual-lab-module-03-consumer-group.html"><strong>Học tiếp Module 3: Consumer Group &amp; Rebalance →</strong></a><br>Kafka Spring Boot Visual Lab · Module 1–2 · Học để dự đoán và làm lại, không học thuộc câu chữ.</p>
+
+  <script>
+    const storageKey = "kafka-visual-lab-m01-m02";
+    const state = JSON.parse(localStorage.getItem(storageKey) || "{}");
+
+    const flowStage = document.getElementById("flowStage");
+    const flowStatus = document.getElementById("flowStatus");
+    document.getElementById("playFlow").addEventListener("click", () => {
+      flowStage.classList.remove("running");
+      void flowStage.offsetWidth;
+      flowStage.classList.add("running");
+      flowStatus.textContent = "① Producer đang publish OrderCreated...";
+      setTimeout(() => { flowStatus.textContent = "② Broker append event vào topic-partition..."; }, 900);
+      setTimeout(() => { flowStatus.textContent = "③ Các consumer độc lập đọc event."; }, 1750);
+      setTimeout(() => { flowStatus.textContent = "Hoàn tất: publish → store → consume."; }, 2550);
+    });
+
+    // Kafka-compatible Murmur2 for UTF-8 keyed records.
+    function murmur2(bytes) {
+      const seed = 0x9747b28c;
+      const m = 0x5bd1e995;
+      let length = bytes.length;
+      let h = (seed ^ length) | 0;
+      let i = 0;
+      while (length >= 4) {
+        let k = (bytes[i] & 0xff) |
+          ((bytes[i + 1] & 0xff) << 8) |
+          ((bytes[i + 2] & 0xff) << 16) |
+          ((bytes[i + 3] & 0xff) << 24);
+        k = Math.imul(k, m);
+        k ^= k >>> 24;
+        k = Math.imul(k, m);
+        h = Math.imul(h, m);
+        h ^= k;
+        i += 4;
+        length -= 4;
+      }
+      if (length === 3) h ^= (bytes[i + 2] & 0xff) << 16;
+      if (length >= 2) h ^= (bytes[i + 1] & 0xff) << 8;
+      if (length >= 1) {
+        h ^= bytes[i] & 0xff;
+        h = Math.imul(h, m);
+      }
+      h ^= h >>> 13;
+      h = Math.imul(h, m);
+      h ^= h >>> 15;
+      return h | 0;
+    }
+
+    const offsets = [0, 0, 0];
+    const encoder = new TextEncoder();
+    const simResult = document.getElementById("simResult");
+
+    function clearEmptyLabel(log) {
+      const placeholder = log.querySelector(".status");
+      if (placeholder) placeholder.remove();
+    }
+
+    document.getElementById("sendEvent").addEventListener("click", () => {
+      const key = document.getElementById("eventKey").value.trim();
+      const value = document.getElementById("eventValue").value.trim() || "EVENT";
+      if (!key) {
+        simResult.textContent = "Hãy nhập key để mô phỏng keyed partitioning.";
+        return;
+      }
+      const hash = murmur2(encoder.encode(key));
+      const partition = (hash & 0x7fffffff) % 3;
+      const offset = offsets[partition]++;
+      const log = document.querySelector(`[data-partition="${partition}"]`);
+      clearEmptyLabel(log);
+      const record = document.createElement("div");
+      record.className = "record";
+      record.title = `key=${key}; value=${value}; partition=${partition}; offset=${offset}`;
+      record.innerHTML = `<strong>offset ${offset}</strong><span>${escapeHtml(key)}</span><span>${escapeHtml(value)}</span>`;
+      log.appendChild(record);
+      record.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "end" });
+      simResult.textContent = `Key “${key}” → P${partition}, offset ${offset}.`;
+    });
+
+    document.getElementById("resetSim").addEventListener("click", () => {
+      offsets.fill(0);
+      document.querySelectorAll(".partition-log").forEach(log => {
+        log.innerHTML = '<span class="status">chưa có record</span>';
+      });
+      simResult.textContent = "Đã đặt lại. Hãy dự đoán trước khi gửi event tiếp theo.";
+    });
+
+    function escapeHtml(value) {
+      return value.replace(/[&<>'"]/g, char => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;"
+      })[char]);
+    }
+
+    const teachBack = document.getElementById("teachBack");
+    teachBack.value = state.teachBack || "";
+    let saveTimer;
+    teachBack.addEventListener("input", () => {
+      document.getElementById("saveState").textContent = "Đang lưu cục bộ...";
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        state.teachBack = teachBack.value;
+        localStorage.setItem(storageKey, JSON.stringify(state));
+        document.getElementById("saveState").textContent = "Đã lưu cục bộ trong trình duyệt.";
+      }, 300);
+    });
+
+    const checks = [...document.querySelectorAll("[data-progress]")];
+    const restored = new Set(state.checks || []);
+    checks.forEach((checkbox, index) => {
+      checkbox.checked = restored.has(index);
+      checkbox.closest(".check-item").classList.toggle("done", checkbox.checked);
+      checkbox.addEventListener("change", () => {
+        checkbox.closest(".check-item").classList.toggle("done", checkbox.checked);
+        state.checks = checks.map((item, i) => item.checked ? i : null).filter(i => i !== null);
+        localStorage.setItem(storageKey, JSON.stringify(state));
+        updateProgress();
+      });
+    });
+
+    function updateProgress() {
+      const complete = checks.filter(item => item.checked).length;
+      const percent = Math.round((complete / checks.length) * 100);
+      document.getElementById("progressBar").style.width = `${percent}%`;
+      document.getElementById("progressText").textContent = `${percent}%`;
+    }
+    updateProgress();
+  </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+# Workspace folders unrelated to this public course
+/java-practice/
+/senior-java-spring-mentor/
+
+# Local tooling and operating-system files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+__pycache__/
+*.py[cod]
