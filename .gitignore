@@ -10,3 +10,9 @@
 Thumbs.db
 __pycache__/
 *.py[cod]
+
+# Separate projects / local output (not part of this course)
+/ai/
+/ai-core-service/
+/output/
+/tmp/
